@@ -1,0 +1,162 @@
+.about-section {
+  display: flex;
+  align-items: center;
+  justify-content: left;
+  place-items: center;
+  position: relative;
+  opacity: 1;
+  height: auto;
+  width: var(--cWidth);
+  margin: auto;
+}
+.about-me {
+  padding: 40px 0px;
+  padding-bottom: 0;
+  width: 100%;
+  max-width: calc(100% - 15px);
+}
+.about-me h3 {
+  font-size: 18px;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  font-weight: 400;
+  color: var(--accentColor);
+  margin-bottom: 15px;
+}
+
+.about-me p {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 26px;
+  letter-spacing: 0.5px;
+  word-spacing: 2px;
+}
+
+.about-me .split-word {
+  display: inline-block;
+  margin-right: 0.3em;
+}
+
+.about-me .split-line {
+  display: block;
+}
+
+/* The first line is the pitch and stays large; the story behind it steps down
+   so all three paragraphs plus the stats fit one viewport on desktop. */
+.about-me p + p {
+  margin-top: 0.7em;
+  font-size: 0.55em;
+  line-height: 1.5;
+  font-weight: 300;
+  color: #cfc9d3;
+}
+
+.about-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 26px 34px;
+  margin-top: 40px;
+  padding-top: 30px;
+  border-top: 1px solid #363636;
+}
+
+.about-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1 1 170px;
+  max-width: 190px;
+}
+
+.about-stat-value {
+  font-size: 40px;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--accentColor);
+}
+
+.about-stat-label {
+  font-size: 14px;
+  font-weight: 200;
+  line-height: 1.4;
+  color: #adacac;
+}
+
+@media only screen and (min-width: 600px) {
+  .about-section {
+    justify-content: center;
+  }
+  .about-me {
+    width: 500px;
+  }
+  .about-me h3 {
+    font-size: 22px;
+    letter-spacing: 6px;
+  }
+  .about-me p {
+    font-size: 28px;
+    line-height: 32px;
+  }
+}
+@media only screen and (min-width: 768px) {
+  .about-me {
+    width: 500px;
+    max-width: calc(100% - 70px);
+    transform: translateY(0%);
+  }
+  .about-me h3 {
+    font-size: 25px;
+    letter-spacing: 7px;
+  }
+  .about-me p {
+    font-size: 33px;
+    line-height: 36px;
+  }
+  .about-section {
+    opacity: 1;
+  }
+}
+@media only screen and (min-width: 1025px) {
+  .about-section {
+    width: var(--cWidth);
+    justify-content: right;
+    max-width: 1920px;
+    /* Taller than the template's one viewport: this section carries three
+       paragraphs plus the stat row, and the scroll-scrubbed fade in
+       GsapScroll.ts is keyed to the section's height. A taller section
+       stretches that timeline, so there is time to actually read it. */
+    height: calc(var(--vh) * 1.45);
+    padding: 0px;
+    opacity: 1;
+  }
+  .about-me {
+    padding: 0px;
+    width: 50%;
+  }
+  .about-me p {
+    font-size: 1.9vw;
+    line-height: 2.3vw;
+  }
+  .about-me p + p {
+    line-height: 1.5;
+  }
+}
+
+@media only screen and (max-width: 600px) {
+  .about-stats {
+    gap: 22px 30px;
+    margin-top: 30px;
+  }
+  .about-stat-value {
+    font-size: 30px;
+  }
+  .about-stat-label {
+    font-size: 12px;
+  }
+}
+@media only screen and (min-width: 1950px) {
+  .about-me p {
+    font-size: 2.5rem;
+    line-height: 2.7rem;
+  }
+}
