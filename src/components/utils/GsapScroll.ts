@@ -89,6 +89,39 @@ const RUN_EASE = 0.12;
  * the face still reads.
  */
 const RUN_FACE_Y = 1.15;
+/**
+ * The drift finishes before the pin does, so he is standing at centre and still
+ * running when the platform's tip arrives, rather than still sliding into place.
+ */
+const DRIFT_END = 0.8;
+/**
+ * Scroll px from losing the platform to being fully in the hole.
+ *
+ * Long because the hole is a moving target: it rises 1:1 with scroll once the
+ * Work pin releases, so a short fall finished while the vortex was still a
+ * thousand pixels below the fold and he vanished into nothing. This lands him
+ * on it while it is comfortably in view.
+ */
+const FALL_SCROLL_PX = 1900;
+/**
+ * The hole is the vortex in the tech section's background video, so its screen
+ * position is derived from the video rather than guessed at as a fraction of
+ * the section. Intrinsic size and the throat's position were measured off the
+ * file itself; the object-fit: cover maths below then holds at any viewport,
+ * which a section-relative fraction would not (the crop changes with aspect).
+ */
+const HOLE_VIDEO_W = 2560;
+const HOLE_VIDEO_H = 1192;
+const HOLE_U = 0.509;
+const HOLE_V = 0.635;
+/**
+ * He reaches the hole at this point in the fall, and spends the rest of it
+ * sinking in place. Arriving and vanishing at the same instant meant you never
+ * actually saw him get there.
+ */
+const FALL_ARRIVES = 0.8;
+/** Fraction of the fall after which he starts shrinking into the hole. */
+const SINK_FROM = 0.82;
 
 const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
 /** Smoothstep: eases both ends so the hand-off has no velocity discontinuity. */
@@ -150,6 +183,7 @@ function setRopeDescent(
    * work: the robot stays put and the cards slide past underneath.
    */
   const workFlex = document.querySelector<HTMLElement>(".work-flex");
+  const techSection = document.querySelector<HTMLElement>(".techstack-new");
   /**
    * The body yaw tl2 leaves behind. Captured once, before the approach blend
    * ever writes rotation.y — capture it later and we would hand back the
@@ -221,8 +255,13 @@ function setRopeDescent(
     // Work.tsx, and resizeUtils deliberately spares it when it kills and
     // rebuilds everything else — so unlike this module's own trigger it
     // survives a resize.
-    const pin = ScrollTrigger.getById("work")?.progress ?? 0;
-    const standXvw = lerp(STAND_X_VW, TREADMILL_END_X_VW, pin);
+    const workTrigger = ScrollTrigger.getById("work");
+    const pin = workTrigger?.progress ?? 0;
+    const standXvw = lerp(
+      STAND_X_VW,
+      TREADMILL_END_X_VW,
+      clamp01(pin / DRIFT_END)
+    );
 
     // The belt only moves during the pin (.work-flex holds x = 0 before and
     // -translateX after), so the run confines itself to it for free.
@@ -273,17 +312,75 @@ function setRopeDescent(
 
     // Standing target: feet on the rule. The model's origin sits at its feet,
     // so the projected line height is the position outright.
-    const lineTop = workFlex!.getBoundingClientRect().top;
+    const flexRect = workFlex!.getBoundingClientRect();
     const sfx = (standXvw * window.innerWidth - canvasLeft) / canvas.width;
-    const sfy = (lineTop - canvasTop) / canvas.height;
+    const sfy = (flexRect.top - canvasTop) / canvas.height;
     const standX = camera.position.x + (sfx - 0.5) * visibleW;
     const standY = camera.position.y + (0.5 - sfy) * visibleH;
 
-    character.position.set(
-      lerp(ropeX, standX, s),
-      lerp(ropeY, standY, s),
-      lerp(ropeZ, 0, s)
+    const onPlatformX = lerp(ropeX, standX, s);
+    const onPlatformY = lerp(ropeY, standY, s);
+    const onPlatformZ = lerp(ropeZ, 0, s);
+
+    // --- Losing the platform ------------------------------------------------
+    // The rule ends with the last card now, so its tip eventually reaches him.
+    // The belt runs 1:1 with scroll from the pin's start, which lets the moment
+    // it passes be expressed as a scroll position rather than tracked as state:
+    // stateless, so scrubbing backwards puts him back on solid ground.
+    const charScreenX = standXvw * window.innerWidth;
+    let fall = 0;
+    if (workTrigger && techSection) {
+      const lineW =
+        parseFloat(
+          getComputedStyle(workFlex!).getPropertyValue("--work-line-w")
+        ) || 0;
+      // Where the tip sits with the belt at rest, and so the scroll at which it
+      // draws level with him.
+      const tipAtRest = flexRect.left + lineW + beltTravel;
+      const lipPassScroll = workTrigger.start + (tipAtRest - charScreenX);
+      fall = clamp01((window.scrollY - lipPassScroll) / FALL_SCROLL_PX);
+    }
+
+    if (fall <= 0) {
+      character.scale.setScalar(1);
+      character.position.set(onPlatformX, onPlatformY, onPlatformZ);
+      return;
+    }
+
+    // Nothing to run on any more.
+    characterControls?.setRun(0, 0);
+
+    // Where the video actually sits after object-fit: cover crops it.
+    const techRect = techSection!.getBoundingClientRect();
+    const vScale = Math.max(
+      techRect.width / HOLE_VIDEO_W,
+      techRect.height / HOLE_VIDEO_H
     );
+    const vW = HOLE_VIDEO_W * vScale;
+    const vH = HOLE_VIDEO_H * vScale;
+    const holeScreenX = techRect.left + (techRect.width - vW) / 2 + HOLE_U * vW;
+    const holeScreenY = techRect.top + (techRect.height - vH) / 2 + HOLE_V * vH;
+
+    const hfx = (holeScreenX - canvasLeft) / canvas.width;
+    const hfy = (holeScreenY - canvasTop) / canvas.height;
+    const holeX = camera.position.x + (hfx - 0.5) * visibleW;
+    const holeY = camera.position.y + (0.5 - hfy) * visibleH;
+
+    // Squared, not smoothed: a fall should accelerate. It completes early so he
+    // arrives at the hole and then sinks, rather than doing both at once.
+    const arrive = clamp01(fall / FALL_ARRIVES);
+    const drop = arrive * arrive;
+    character.position.set(
+      lerp(onPlatformX, holeX, drop),
+      lerp(onPlatformY, holeY, drop),
+      lerp(onPlatformZ, 0, drop)
+    );
+
+    // The canvas draws above the page, so he cannot pass behind the icons —
+    // shrinking is what reads as being swallowed rather than landing on top.
+    const sink = clamp01((fall - SINK_FROM) / (1 - SINK_FROM));
+    character.scale.setScalar(lerp(1, 0.08, sink));
+    gsap.set(".character-model", { opacity: 1 - sink });
   };
 
   const engage = () => {
@@ -306,6 +403,7 @@ function setRopeDescent(
 
     if (goingBack) {
       character.position.set(0, 0, 0);
+      character.scale.setScalar(1);
       if (restYaw !== null) character.rotation.y = restYaw;
       runWeight = 0;
       lastShift = null;
@@ -326,6 +424,7 @@ function setRopeDescent(
       ease: "power2.out",
       onComplete: () => {
         character.position.set(0, 0, 0);
+        character.scale.setScalar(1);
       },
     });
   };
@@ -340,7 +439,9 @@ function setRopeDescent(
     // there while that section is pinned, so the journey ends only once the
     // following section arrives.
     endTrigger: ".techstack-new",
-    end: "top top",
+    // Must outlive the sink: "top top" fires while he is still descending, and
+    // the sink now runs on past the section's centre.
+    end: "bottom top",
     invalidateOnRefresh: true,
     onEnter: engage,
     onEnterBack: engage,

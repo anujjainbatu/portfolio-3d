@@ -48,16 +48,18 @@
   flex-direction: column-reverse;
 }
 
+/* The platform the character runs on. It ends with the last card rather than
+   running to the horizon, so it can be pulled out from under him — the width
+   comes from Work.tsx because .work-flex is narrower than its own content. */
 .work-flex::before,
 .work-flex::after {
   content: "";
-  width: calc(50000vw);
+  width: var(--work-line-w, 50000vw);
   height: 1px;
   background-color: #363636;
   position: absolute;
-  left: 50%;
+  left: 0;
   top: 0;
-  transform: translateX(-50%);
 }
 
 .work-flex::after {

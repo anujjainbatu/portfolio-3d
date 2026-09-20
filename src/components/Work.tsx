@@ -15,26 +15,41 @@ const Work = () => {
 
     let translateX: number = 0;
 
+    /** Pinned scroll left over once the rule's tip reaches centre, so it can be
+     *  seen sliding out from under the character before he drops. */
+    const LIP_OVERSHOOT_PX = 400;
+
     function setTranslateX() {
       const box = document.getElementsByClassName("work-box");
       if (box.length === 0) return;
-      const rectLeft = document
-        .querySelector(".work-container")!
-        .getBoundingClientRect().left;
+      const flex = box[0].parentElement as HTMLElement;
       const rect = box[0].getBoundingClientRect();
-      const parentWidth = box[0].parentElement!.getBoundingClientRect().width;
-      let padding: number =
+      const padding: number =
         parseInt(window.getComputedStyle(box[0]).padding) / 2;
-      translateX = rect.width * box.length - (rectLeft + parentWidth) + padding;
+
+      // The rule under the heading is .work-flex::before, and .work-flex is
+      // only as wide as its container (the boxes overflow it), so the rule
+      // cannot size itself off the flex — 100% there would cover just the first
+      // screenful. Publish the real content width for the CSS to use.
+      const contentWidth = rect.width * box.length + padding;
+      flex.style.setProperty("--work-line-w", `${contentWidth}px`);
+
+      // Scroll until the rule's tip has passed the middle of the screen, where
+      // the character is standing, plus the overshoot that walks it past him.
+      const lineRight = flex.getBoundingClientRect().left + contentWidth;
+      translateX = lineRight - window.innerWidth / 2 + LIP_OVERSHOOT_PX;
     }
 
     setTranslateX();
 
-    let timeline = gsap.timeline({
+    const timeline = gsap.timeline({
       scrollTrigger: {
         trigger: ".work-section",
         start: "top top",
-        end: `+=${translateX}`,
+        // Function form so a refresh re-reads it. The box width drops from
+        // 600px to 350px below 1400, so a resize across that breakpoint used to
+        // leave both the pin length and the rule measured for the old layout.
+        end: () => `+=${translateX}`,
         scrub: 1,
         pin: true,
         pinSpacing: true,
@@ -45,15 +60,21 @@ const Work = () => {
     });
 
     timeline.to(".work-flex", {
-      x: -translateX,
+      x: () => -translateX,
       ease: "none",
     });
+
+    // Re-measure before every refresh, which includes window resizes, so the
+    // rule length and the pin distance follow the breakpoint.
+    const remeasure = () => setTranslateX();
+    ScrollTrigger.addEventListener("refreshInit", remeasure);
 
     // Refresh ScrollTrigger after layout settles
     ScrollTrigger.refresh();
 
     // Clean up
     return () => {
+      ScrollTrigger.removeEventListener("refreshInit", remeasure);
       timeline.kill();
       ScrollTrigger.getById("work")?.kill();
     };

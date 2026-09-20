@@ -43,13 +43,22 @@
   will-change: left, top;
   transition: transform 0.3s ease-out;
 }
-.resume-button {
+/* Bottom-right rail. Narrow screens rotate each link to run up the right
+   edge, so the stack is laid out along the rotated axis there — see the
+   max-width rule below. */
+.bottom-links {
   position: absolute;
   z-index: 99;
-  display: flex;
-  gap: 5px;
   bottom: 40px;
   right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 16px;
+}
+.bottom-link {
+  display: flex;
+  gap: 5px;
   width: auto;
   text-wrap: nowrap;
   letter-spacing: 4px;
@@ -59,18 +68,31 @@
   color: #5e5e5e;
   cursor: pointer;
   transition: 0.5s;
-  transform-origin: left bottom;
-  transform: translateX(100%) rotateZ(-90deg);
 }
-.resume-button:hover {
+.bottom-link:hover {
   color: #fff;
 }
-div.resume-button span {
-  color: #fff;
+.bottom-link span {
   font-size: 17px;
   margin-top: -1px;
   display: flex;
   align-items: center;
+}
+
+@media only screen and (max-width: 767px) {
+  /* Narrow screens turn the rail to read bottom-to-top up the right edge.
+     The rotation goes on the container, not on each link: rotating the links
+     individually would leave them laid out side by side in unrotated space
+     and only spin in place. Rotating the container means its main axis runs
+     up the screen, so row-reverse puts "LET'S TALK" (first in the DOM) above
+     "RESUME", and align-items keeps both hugging the right edge. */
+  .bottom-links {
+    flex-direction: row-reverse;
+    align-items: flex-end;
+    gap: 22px;
+    transform-origin: right bottom;
+    transform: rotate(-90deg) translateX(100%);
+  }
 }
 .check-line {
   position: fixed;
@@ -91,12 +113,11 @@ div.resume-button span {
   }
 }
 @media only screen and (min-width: 768px) {
-  .resume-button {
-    transform: none;
+  .bottom-link {
     font-size: 20px;
     line-height: 20px;
   }
-  div.resume-button span {
+  .bottom-link span {
     font-size: 23px;
     margin-top: -1.5px;
   }
