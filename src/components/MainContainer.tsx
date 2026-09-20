@@ -1,7 +1,8 @@
 import { PropsWithChildren, useEffect, useState } from "react";
 import About from "./About";
 import Career from "./Career";
-import Recognition from "./Recognition";
+// Temporarily hidden — see the commented-out render below.
+// import Recognition from "./Recognition";
 import Contact from "./Contact";
 import Cursor from "./Cursor";
 import Landing from "./Landing";
@@ -71,7 +72,9 @@ const MainContainer = ({ children }: PropsWithChildren) => {
         <About />
         <WhatIDo />
         <Career />
-        <Recognition />
+        {/* Hidden for now. The component and its content in config.ts are
+            untouched; restore by uncommenting this and the import above. */}
+        {/* <Recognition /> */}
         <Work />
         <TechStackNew />
         <CallToAction />

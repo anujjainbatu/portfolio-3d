@@ -16,7 +16,8 @@
   font-size: 70px;
   line-height: 70px;
   font-weight: 400;
-  text-align: center;
+  text-align: left;
+  width: 100%;
   background: linear-gradient(0deg, #7f40ff, #ffffff);
   background-clip: text;
   -webkit-background-clip: text;
@@ -31,11 +32,17 @@
   font-weight: 300;
 }
 
+.career-container {
+  width: 100%;
+}
+
 .career-info {
   position: relative;
   display: flex;
   flex-direction: column;
   margin: 0px auto;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .career-info-box {

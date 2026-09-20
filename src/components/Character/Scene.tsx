@@ -11,6 +11,7 @@ import {
   handleTouchMove,
 } from "./utils/mouseUtils";
 import setAnimations from "./utils/animationUtils";
+import { setCharTimeline, setAllTimeline } from "../utils/GsapScroll";
 import { setProgress } from "../Loading";
 
 const Scene = () => {
@@ -48,18 +49,26 @@ const Scene = () => {
 
       let headBone: THREE.Object3D | null = null;
       let mixer: THREE.AnimationMixer;
+      let poseTick: (() => void) | null = null;
 
       const clock = new THREE.Clock();
+
+      // The model loads asynchronously while sceneRef persists across mounts,
+      // so under StrictMode's double-invoke the first load resolves after the
+      // cleanup and adds a second character to the same scene. Harmless while
+      // both sit at the origin, but visible the moment one of them moves.
+      let cancelled = false;
 
       const light = setLighting(scene);
       let progress = setProgress((value) => setLoading(value));
       const { loadCharacter } = setCharacter(renderer, scene, camera);
 
       loadCharacter().then((gltf) => {
-        if (gltf) {
+        if (gltf && !cancelled) {
           const animations = setAnimations(gltf);
           hoverDivRef.current && animations.hover(gltf, hoverDivRef.current);
           mixer = animations.mixer;
+          poseTick = animations.tick;
           let character = gltf.scene;
           setChar(character);
           scene.add(character);
@@ -72,6 +81,8 @@ const Scene = () => {
               headBone = obj;
             }
           });
+          setCharTimeline(character, camera);
+          setAllTimeline();
           progress.loaded().then(() => {
             setTimeout(() => {
               light.turnOnLights();
@@ -131,10 +142,13 @@ const Scene = () => {
         if (mixer) {
           mixer.update(delta);
         }
+        // After the mixer, never before: it restores bone state on update.
+        poseTick?.();
         renderer.render(scene, camera);
       };
       animate();
       return () => {
+        cancelled = true;
         clearTimeout(debounce);
         scene.clear();
         renderer.dispose();

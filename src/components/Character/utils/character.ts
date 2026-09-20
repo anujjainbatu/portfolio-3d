@@ -1,6 +1,5 @@
 import * as THREE from "three";
 import { GLTF, GLTFLoader } from "three-stdlib";
-import { setCharTimeline, setAllTimeline } from "../../utils/GsapScroll";
 
 /**
  * Hero model: RobotExpressive, from the three.js examples.
@@ -48,9 +47,11 @@ const setCharacter = (
             }
           });
 
+          // Timeline setup deliberately does NOT happen here. This callback
+          // runs for every load, including one StrictMode discards, which
+          // would bind the scroll timelines to a character that never reaches
+          // the scene. Scene.tsx owns that, once, for the live character.
           resolve(gltf);
-          setCharTimeline(character, camera);
-          setAllTimeline();
         },
         undefined,
         (error) => {

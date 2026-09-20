@@ -1,5 +1,288 @@
 import * as THREE from "three";
 import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { characterControls } from "../Character/utils/animationUtils";
+
+/**
+ * Where the gripping hands sit relative to the model origin (its feet), in
+ * world units, for the hang pose in animationUtils.ts.
+ *
+ * The grip is off to the robot's side rather than straight overhead: its head
+ * is a wide dome topping out at y=4.58 while the arms only reach about 4.3, so
+ * hands raised over the head are swallowed by it and the rope appears to end at
+ * the skull. Gripping to the side puts the hands clear of the silhouette, and
+ * offsetting the body by GRIP_X lands them on the rope.
+ */
+const ROBOT_GRIP_X = 1.72;
+const ROBOT_GRIP_Y = 3.71;
+const ROBOT_GRIP_Z = 0.32;
+/**
+ * How far the robot is turned while on the rope. tl2 leaves it at y=0.92 (~53
+ * degrees), which hides the gripping arm behind the head; this faces it back
+ * towards the viewer so the grip reads.
+ */
+const ROPE_FACE_Y = 0.22;
+/** Camera distance while on the rope — this is what makes the robot small. */
+const ROPE_CAM_Z = 104;
+const ROPE_CAM_Y = 2.3;
+/** tl2's end state, restored when the robot leaves the rope upwards. */
+const ROPE_EXIT_CAM_Z = 78;
+const ROPE_EXIT_CAM_Y = 3.0;
+/** Peak pendulum angle in radians (~3.4 degrees). */
+const SWAY = 0.06;
+const SWAY_SPEED = 0.03;
+/**
+ * The hand-off window, measured as the career section's top travelling up the
+ * screen, in fractions of viewport height.
+ *
+ * It deliberately FINISHES while the section top is still 0.25vh below the
+ * viewport top, rather than at the top itself: the rope is already drawing by
+ * then, and a partly-blended character leaves its hand short of the tip, so
+ * the rope visibly dangles past the grip. Landing the blend early means the
+ * hand is locked on before the rope is prominent.
+ */
+const APPROACH_FROM_VH = 0.85;
+const APPROACH_TO_VH = 0.25;
+
+/**
+ * The step off the rope onto the Work section's rule, timed the same way but
+ * against that section's top. It finishes well before the section pins so the
+ * robot is already planted when the cards start sliding past.
+ */
+const STAND_FROM_VH = 0.95;
+const STAND_TO_VH = 0.35;
+/**
+ * Where along the rule it stands, as a fraction of viewport width — to the
+ * right of the "Systems in production" heading, which reaches about 0.72.
+ */
+const STAND_X_VW = 0.8;
+/**
+ * Pulled further back than the rope. Once the section pins, the rule sits only
+ * ~190px below the top of the viewport and the navbar occupies the first ~60,
+ * so a rope-sized robot standing on it would run into both.
+ */
+const STAND_CAM_Z = 165;
+
+const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
+/** Smoothstep: eases both ends so the hand-off has no velocity discontinuity. */
+const ease = (t: number) => t * t * (3 - 2 * t);
+const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+
+/** Module-scoped so a re-run (resize rebuilds the timelines) cannot leak one. */
+let ropeTicker: (() => void) | null = null;
+let ropeTrigger: ScrollTrigger | null = null;
+
+/**
+ * Hang the character off the growing career timeline.
+ *
+ * .career-timeline draws downward on scroll and .career-dot already rides its
+ * bottom tip, so rather than re-deriving the tip from scroll progress we read
+ * the dot's rendered position every frame and place the robot there. That stays
+ * in lockstep with the line for free, including through its scrub smoothing.
+ *
+ * The robot is moved in 3D (character.position) rather than by transforming
+ * .character-model, because that element is a position:fixed WebGL canvas whose
+ * transform is already owned by tl1/tl2/tl3. character.position is untouched by
+ * those timelines, so it is a free channel.
+ */
+function setRopeDescent(
+  character: THREE.Object3D,
+  camera: THREE.PerspectiveCamera
+) {
+  const rope = document.querySelector<HTMLElement>(".career-timeline");
+  const dot = document.querySelector<HTMLElement>(".career-dot");
+  const model = document.querySelector<HTMLElement>(".character-model");
+  if (!rope || !dot || !model) return;
+
+  if (ropeTicker) {
+    gsap.ticker.remove(ropeTicker);
+    ropeTicker = null;
+  }
+  if (ropeTrigger) {
+    ropeTrigger.kill();
+    ropeTrigger = null;
+  }
+
+  const reduceMotion = window.matchMedia(
+    "(prefers-reduced-motion: reduce)"
+  ).matches;
+  let phase = 0;
+  const grip = new THREE.Vector3();
+
+  const section = document.querySelector<HTMLElement>(".career-section");
+  const workSection = document.querySelector<HTMLElement>(".work-section");
+  /**
+   * The rule under "Systems in production" is .work-flex::before — a pseudo
+   * element, so it cannot be measured directly. It sits at top:0 of .work-flex,
+   * so that element's rect top IS the line. While .work-section is pinned the
+   * line holds a fixed viewport position, which is what makes standing on it
+   * work: the robot stays put and the cards slide past underneath.
+   */
+  const workFlex = document.querySelector<HTMLElement>(".work-flex");
+  /**
+   * The body yaw tl2 leaves behind. Captured once, before the approach blend
+   * ever writes rotation.y — capture it later and we would hand back the
+   * rope-facing angle instead of tl2's.
+   */
+  let restYaw: number | null = null;
+
+  const follow = () => {
+    const canvas = model.getBoundingClientRect();
+    if (canvas.width === 0 || canvas.height === 0) return;
+    const tip = dot.getBoundingClientRect();
+    const line = rope.getBoundingClientRect();
+
+    // Measure the canvas where it actually is. tl1/tl2/tl3 transform this
+    // element and still do so during the approach, so assuming it sits centred
+    // was what forced the old code to reset the transform (and snap) on entry.
+    // Reading the live rect instead composes with whatever they are doing —
+    // nothing here moves this element, so there is no feedback.
+    const canvasLeft = canvas.left;
+    const canvasTop = canvas.top;
+
+    // How far into the hand-off we are: 0 while the career section is still
+    // APPROACH_VH down the screen, 1 once its top reaches the viewport top.
+    const sectionTop = section
+      ? section.getBoundingClientRect().top
+      : 0;
+    const vh = window.innerHeight;
+    const e = ease(
+      clamp01(
+        (APPROACH_FROM_VH * vh - sectionTop) /
+          ((APPROACH_FROM_VH - APPROACH_TO_VH) * vh)
+      )
+    );
+
+    // How far through stepping off the rope onto the Work rule. Needed before
+    // the camera, which shrinks across the same blend.
+    const s =
+      workSection && workFlex
+        ? ease(
+            clamp01(
+              (STAND_FROM_VH * vh - workSection.getBoundingClientRect().top) /
+                ((STAND_FROM_VH - STAND_TO_VH) * vh)
+            )
+          )
+        : 0;
+
+    // Camera first — the projection below reads camera.position.
+    camera.position.z = lerp(
+      lerp(ROPE_EXIT_CAM_Z, ROPE_CAM_Z, e),
+      STAND_CAM_Z,
+      s
+    );
+    camera.position.y = lerp(ROPE_EXIT_CAM_Y, ROPE_CAM_Y, e);
+
+    // Project the rope tip onto the world plane the character occupies (z ~ 0).
+    const dist = camera.position.z;
+    const visibleH =
+      (2 * dist * Math.tan((camera.fov * Math.PI) / 360)) / camera.zoom;
+    const visibleW = visibleH * camera.aspect;
+    const fx = (line.left + line.width / 2 - canvasLeft) / canvas.width;
+    const fy = (tip.top + tip.height / 2 - canvasTop) / canvas.height;
+    const worldX = camera.position.x + (fx - 0.5) * visibleW;
+    const worldY = camera.position.y + (0.5 - fy) * visibleH;
+
+    const theta = reduceMotion ? 0 : Math.sin(phase) * SWAY * e * (1 - s);
+    phase += SWAY_SPEED;
+    character.rotation.z = theta;
+    character.rotation.y = lerp(restYaw ?? ROPE_FACE_Y, ROPE_FACE_Y, e);
+    // Arms let go of the rope as the feet find the rule.
+    characterControls?.setHangWeight(e * (1 - s));
+
+    // Put the HANDS on the rope, not the model origin. The grip is a point in
+    // the character's local frame, and the character carries rotation from
+    // tl1/tl2/tl3 plus the sway, so the offset has to be rotated with it —
+    // subtracting the raw local vector left the hands a third of a unit adrift.
+    // Doing it this way also gives the pendulum its pivot at the hands for
+    // free, since the sway is part of the same quaternion.
+    grip.set(ROBOT_GRIP_X, ROBOT_GRIP_Y, ROBOT_GRIP_Z).applyQuaternion(
+      character.quaternion
+    );
+    // Travel from where "What I Do" leaves it (the origin) onto the rope.
+    const ropeX = lerp(0, worldX - grip.x, e);
+    const ropeY = lerp(0, worldY - grip.y, e);
+    const ropeZ = lerp(0, -grip.z, e);
+
+    if (s <= 0) {
+      character.position.set(ropeX, ropeY, ropeZ);
+      return;
+    }
+
+    // Standing target: feet on the rule. The model's origin sits at its feet,
+    // so the projected line height is the position outright.
+    const lineTop = workFlex!.getBoundingClientRect().top;
+    const sfx = (STAND_X_VW * window.innerWidth - canvasLeft) / canvas.width;
+    const sfy = (lineTop - canvasTop) / canvas.height;
+    const standX = camera.position.x + (sfx - 0.5) * visibleW;
+    const standY = camera.position.y + (0.5 - sfy) * visibleH;
+
+    character.position.set(
+      lerp(ropeX, standX, s),
+      lerp(ropeY, standY, s),
+      lerp(ropeZ, 0, s)
+    );
+  };
+
+  const engage = () => {
+    if (restYaw === null) restYaw = character.rotation.y;
+    // The canvas transform stays with tl1/tl2/tl3 throughout; opacity is the
+    // only thing here that owns, and only so the exit fade can be undone.
+    gsap.set(".character-model", { opacity: 1 });
+    if (!ropeTicker) {
+      ropeTicker = follow;
+      gsap.ticker.add(ropeTicker);
+    }
+  };
+
+  const release = (goingBack: boolean) => {
+    if (ropeTicker) {
+      gsap.ticker.remove(ropeTicker);
+      ropeTicker = null;
+    }
+    character.rotation.z = 0;
+
+    if (goingBack) {
+      character.position.set(0, 0, 0);
+      if (restYaw !== null) character.rotation.y = restYaw;
+      camera.position.z = ROPE_EXIT_CAM_Z;
+      camera.position.y = ROPE_EXIT_CAM_Y;
+      characterControls?.resumeIdle();
+      gsap.set(".character-model", { opacity: 1 });
+      return;
+    }
+
+    // Past the Work section. The arms came down as the feet found the rule, so
+    // there is nothing to land — just fade out.
+    gsap.to(".character-model", {
+      opacity: 0,
+      duration: 0.8,
+      delay: 0.9,
+      ease: "power2.out",
+      onComplete: () => {
+        character.position.set(0, 0, 0);
+      },
+    });
+  };
+
+  ropeTrigger = ScrollTrigger.create({
+    trigger: ".career-section",
+    // Earlier than the hand-off needs, so the ticker is already running when
+    // the blend starts. At e = 0 every blended value equals its pre-career
+    // value, so the early start is a visual no-op.
+    start: "top 95%",
+    // Runs on past the rope: the robot steps onto the Work rule and stands
+    // there while that section is pinned, so the journey ends only once the
+    // following section arrives.
+    endTrigger: ".techstack-new",
+    end: "top top",
+    invalidateOnRefresh: true,
+    onEnter: engage,
+    onEnterBack: engage,
+    onLeave: () => release(false),
+    onLeaveBack: () => release(true),
+  });
+}
 
 /**
  * Scroll choreography for the hero.
@@ -93,11 +376,13 @@ export function setCharTimeline(
         .fromTo(
           ".character-model",
           { y: "0%" },
-          { y: "-100%", duration: 4, ease: "none", delay: 1 },
+          { y: "-15%", duration: 4, ease: "none", delay: 1 },
           0
         )
         .fromTo(".whatIDO", { y: 0 }, { y: "15%", duration: 2 }, 0)
         .to(character.rotation, { x: -0.04, duration: 2, delay: 1 }, 0);
+
+      setRopeDescent(character, camera);
     }
   } else {
     if (character) {
