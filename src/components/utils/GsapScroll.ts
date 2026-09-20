@@ -57,11 +57,38 @@ const STAND_TO_VH = 0.35;
  */
 const STAND_X_VW = 0.8;
 /**
+ * Where the treadmill leaves him. He keeps running to the right, but the belt
+ * outruns him, so he slides back across the screen from where he lands to here
+ * by the time the pin ends.
+ */
+const TREADMILL_END_X_VW = 0.5;
+/**
  * Pulled further back than the rope. Once the section pins, the rule sits only
  * ~190px below the top of the viewport and the navbar occupies the first ~60,
  * so a rope-sized robot standing on it would run into both.
  */
 const STAND_CAM_Z = 165;
+/**
+ * World pixels per stride.
+ *
+ * A stride true to his size would be ~70px, but the belt is measured at ~10
+ * px/frame typically and 50 at the p90 — 600 to 3000 px/s past a robot only
+ * 100px tall. Honouring that would spin the legs roughly nine times a second:
+ * a blur, not a run. The world simply moves faster than any character could,
+ * so this trades a little foot-skate for a cycle that reads, landing near two
+ * or three strides a second at an ordinary scroll speed.
+ */
+const RUN_STRIDE_PX = 240;
+/** World px moved in a frame at which the run is fully weighted. */
+const RUN_FULL_SPEED_PX = 8;
+/** How fast the run weight chases its target, per frame. */
+const RUN_EASE = 0.12;
+/**
+ * Yaw while running: the model faces +Z at rest and +PI/2 turns it to +X
+ * (screen right, the way the content is travelling). Short of a full profile so
+ * the face still reads.
+ */
+const RUN_FACE_Y = 1.15;
 
 const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
 /** Smoothstep: eases both ends so the hand-off has no velocity discontinuity. */
@@ -108,6 +135,10 @@ function setRopeDescent(
   ).matches;
   let phase = 0;
   const grip = new THREE.Vector3();
+  /** Previous world offset of .work-flex, for this frame's run speed. */
+  let lastShift: number | null = null;
+  /** Smoothed so small scroll jitters do not flicker the run on and off. */
+  let runWeight = 0;
 
   const section = document.querySelector<HTMLElement>(".career-section");
   const workSection = document.querySelector<HTMLElement>(".work-section");
@@ -183,10 +214,41 @@ function setRopeDescent(
     const worldX = camera.position.x + (fx - 0.5) * visibleW;
     const worldY = camera.position.y + (0.5 - fy) * visibleH;
 
+    // Treadmill. He runs to the right while the pinned Work content slides
+    // left; the belt wins, so he loses ground across the screen as it goes.
+    //
+    // Progress comes from the pin itself. That ScrollTrigger belongs to
+    // Work.tsx, and resizeUtils deliberately spares it when it kills and
+    // rebuilds everything else — so unlike this module's own trigger it
+    // survives a resize.
+    const pin = ScrollTrigger.getById("work")?.progress ?? 0;
+    const standXvw = lerp(STAND_X_VW, TREADMILL_END_X_VW, pin);
+
+    // The belt only moves during the pin (.work-flex holds x = 0 before and
+    // -translateX after), so the run confines itself to it for free.
+    const beltTravel = -((gsap.getProperty(".work-flex", "x") as number) || 0);
+    const driftPx = (STAND_X_VW - standXvw) * window.innerWidth;
+    // What his feet actually cover: the belt's travel less his own slippage.
+    // Striding against the raw belt travel instead would turn his legs faster
+    // than the ground really passes under him — a skate that undoes the effect.
+    const groundTravel = beltTravel - driftPx;
+
+    const speed =
+      lastShift === null ? 0 : Math.abs(groundTravel - lastShift);
+    lastShift = groundTravel;
+    const runTarget = s * ease(clamp01(speed / RUN_FULL_SPEED_PX));
+    runWeight += (runTarget - runWeight) * RUN_EASE;
+    characterControls?.setRun(runWeight, groundTravel / RUN_STRIDE_PX);
+
     const theta = reduceMotion ? 0 : Math.sin(phase) * SWAY * e * (1 - s);
     phase += SWAY_SPEED;
     character.rotation.z = theta;
-    character.rotation.y = lerp(restYaw ?? ROPE_FACE_Y, ROPE_FACE_Y, e);
+    // Turns to face the way it is running, and back again as it settles.
+    character.rotation.y = lerp(
+      lerp(restYaw ?? ROPE_FACE_Y, ROPE_FACE_Y, e),
+      RUN_FACE_Y,
+      runWeight
+    );
     // Arms let go of the rope as the feet find the rule.
     characterControls?.setHangWeight(e * (1 - s));
 
@@ -212,7 +274,7 @@ function setRopeDescent(
     // Standing target: feet on the rule. The model's origin sits at its feet,
     // so the projected line height is the position outright.
     const lineTop = workFlex!.getBoundingClientRect().top;
-    const sfx = (STAND_X_VW * window.innerWidth - canvasLeft) / canvas.width;
+    const sfx = (standXvw * window.innerWidth - canvasLeft) / canvas.width;
     const sfy = (lineTop - canvasTop) / canvas.height;
     const standX = camera.position.x + (sfx - 0.5) * visibleW;
     const standY = camera.position.y + (0.5 - sfy) * visibleH;
@@ -245,6 +307,9 @@ function setRopeDescent(
     if (goingBack) {
       character.position.set(0, 0, 0);
       if (restYaw !== null) character.rotation.y = restYaw;
+      runWeight = 0;
+      lastShift = null;
+      characterControls?.setRun(0, 0);
       camera.position.z = ROPE_EXIT_CAM_Z;
       camera.position.y = ROPE_EXIT_CAM_Y;
       characterControls?.resumeIdle();

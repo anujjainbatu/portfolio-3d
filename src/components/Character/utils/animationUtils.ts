@@ -51,6 +51,8 @@ const HANG_POSE: { bone: string; rot: Rot }[] = [
 ];
 /** Played once when the robot reaches the bottom of the rope. */
 const LAND = "Standing";
+/** Run-on-the-spot cycle for the Work platform. Carries no root motion. */
+const RUN = "Running";
 
 /**
  * Scroll code (see GsapScroll.ts) needs to drive the pose from outside the
@@ -59,6 +61,7 @@ const LAND = "Standing";
  */
 export let characterControls: {
   setHangWeight: (w: number) => void;
+  setRun: (weight: number, phase: number) => void;
   land: () => void;
   resumeIdle: () => void;
 } | null = null;
@@ -161,24 +164,63 @@ const setAnimations = (gltf: GLTF) => {
    * Blend the arms towards the grip. Must run after every mixer.update(), which
    * Scene.tsx does from the render loop.
    *
-   * Only the four arm bones are touched, so Idle keeps driving the rest of the
-   * body and the robot stays alive while it hangs.
+   * Only the four arm bones are touched, so whatever clip is playing keeps
+   * driving the rest of the body.
    *
-   * It always rebuilds from the REST rotation rather than slerping the bone's
-   * current value. Idle animates only Head, Body and the four leg bones — it
-   * never writes the arms — so there is nothing to overwrite them each frame
-   * and slerping in place accumulated: the arms crept to the full grip and,
-   * once the weight returned to 0, stayed raised with nothing to reset them.
-   * Driving from rest is deterministic and costs four quaternion copies.
+   * While the grip is on, it rebuilds from the REST rotation rather than
+   * slerping the bone's current value: Idle animates only Head, Body and the
+   * four leg bones, so with nothing overwriting the arms each frame, slerping
+   * in place accumulated and left them stuck raised after the weight dropped.
+   *
+   * Once the weight reaches 0 it resets to rest ONCE and then stops writing, so
+   * the mixer can own the arms again. That matters for Running, which does
+   * animate all four — holding them at rest every frame would flatten its arm
+   * swing into a marionette.
    */
+  let gripApplied = false;
   function tick() {
+    if (hang.weight <= 0) {
+      if (!gripApplied) return;
+      for (const { node, rest } of hangBones) node!.quaternion.copy(rest!);
+      gripApplied = false;
+      return;
+    }
     for (const { node, rest, posed } of hangBones) {
       node!.quaternion.copy(rest!).slerp(posed!, hang.weight);
     }
+    gripApplied = true;
   }
 
   function setHangWeight(w: number) {
     hang.weight = Math.min(1, Math.max(0, w));
+  }
+
+  /**
+   * Run on the spot, driven by scroll rather than by the clock.
+   *
+   * The action is kept paused and its `time` set directly from `phase`, so the
+   * legs only move when the world does. Letting it play on its own timer would
+   * foot-slide the moment the scroll stopped, because the platform it is
+   * standing on is static while the content slides past.
+   *
+   * `phase` is signed: scrolling back up runs the cycle backwards, which is what
+   * the world is doing too.
+   */
+  const runAction = actionFor(RUN);
+  if (runAction) {
+    runAction.play();
+    runAction.paused = true;
+    runAction.setEffectiveWeight(0);
+  }
+  function setRun(weight: number, phase: number) {
+    if (!runAction) return;
+    const w = Math.min(1, Math.max(0, weight));
+    const duration = runAction.getClip().duration;
+    let t = (phase % 1) * duration;
+    if (t < 0) t += duration;
+    runAction.time = t;
+    runAction.setEffectiveWeight(w);
+    idleAction?.setEffectiveWeight(1 - w);
   }
 
   function resumeIdle() {
@@ -245,7 +287,7 @@ const setAnimations = (gltf: GLTF) => {
     };
   }
 
-  characterControls = { setHangWeight, land, resumeIdle };
+  characterControls = { setHangWeight, setRun, land, resumeIdle };
 
   return { mixer, startIntro, hover, tick };
 };
