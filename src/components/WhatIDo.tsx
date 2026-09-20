@@ -5,9 +5,48 @@ import { config } from "../config";
 
 const WhatIDo = () => {
   const containerRef = useRef<(HTMLDivElement | null)[]>([]);
+  const innerRef = useRef<(HTMLDivElement | null)[]>([]);
   const setRef = (el: HTMLDivElement | null, index: number) => {
     containerRef.current[index] = el;
   };
+  const setInnerRef = (el: HTMLDivElement | null, index: number) => {
+    innerRef.current[index] = el;
+  };
+  /**
+   * A card only traps the wheel while it actually has something to scroll.
+   * data-lenis-prevent tells Lenis to keep its hands off a subtree, but if we
+   * set it unconditionally the page would freeze whenever the cursor sat over
+   * a card whose copy already fits — and the cards are large and centred, so
+   * that is most of the time. The card grows and shrinks on hover, so the
+   * overflow test is re-run from a ResizeObserver rather than just on mount.
+   */
+  useEffect(() => {
+    const inners = innerRef.current.filter(Boolean) as HTMLDivElement[];
+    if (inners.length === 0) return;
+
+    const sync = (el: HTMLDivElement) => {
+      if (el.scrollHeight > el.clientHeight + 1) {
+        el.setAttribute("data-lenis-prevent", "");
+      } else {
+        el.removeAttribute("data-lenis-prevent");
+        el.scrollTop = 0;
+      }
+    };
+    const syncAll = () => inners.forEach(sync);
+
+    const observer = new ResizeObserver(syncAll);
+    inners.forEach((el) => {
+      sync(el);
+      observer.observe(el);
+    });
+    window.addEventListener("resize", syncAll);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", syncAll);
+    };
+  }, []);
+
   useEffect(() => {
     if (ScrollTrigger.isTouch) {
       containerRef.current.forEach((container) => {
@@ -87,7 +126,10 @@ const WhatIDo = () => {
             </div>
             <div className="what-corner"></div>
 
-            <div className="what-content-in">
+            <div
+              className="what-content-in"
+              ref={(el) => setInnerRef(el, 0)}
+            >
               <h3>{config.skills.build.title}</h3>
               <h4>{config.skills.build.description}</h4>
               <p>
@@ -120,7 +162,10 @@ const WhatIDo = () => {
               </svg>
             </div>
             <div className="what-corner"></div>
-            <div className="what-content-in">
+            <div
+              className="what-content-in"
+              ref={(el) => setInnerRef(el, 1)}
+            >
               <h3>{config.skills.integrate.title}</h3>
               <h4>{config.skills.integrate.description}</h4>
               <p>

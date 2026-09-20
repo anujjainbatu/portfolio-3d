@@ -11,8 +11,22 @@ open-source 3D developer portfolio by **Redoyanul Haque**, MIT licensed.
 - Source: https://github.com/red1-for-hek/portfolio-website
 - License: MIT — the copyright notice is preserved in `LICENSE`.
 
-This includes the 3D character asset at `public/models/`, which is inherited
-from that template and is not original work.
+The hero 3D character that shipped with that template has been removed; the
+model now used is credited below. The scroll choreography in
+`src/components/utils/GsapScroll.ts` still derives from the template.
+
+## 3D model — `public/models/RobotExpressive.glb`
+
+The hero model is **RobotExpressive**, taken unmodified from the three.js
+examples.
+
+- Model by **Tomás Laulhé** — https://www.patreon.com/quaternius
+- Modifications (facial expression morph targets, FBX2GLTF conversion,
+  material cleanup) by **Don McCurdy** — https://donmccurdy.com
+- Source: https://github.com/mrdoob/three.js/tree/dev/examples/models/gltf/RobotExpressive
+- **License: CC0 1.0** — public domain, no attribution required. Credited here
+  by this repository's convention, and because the creator takes support on
+  Patreon.
 
 ## Chess engine — `public/stockfish.js`
 

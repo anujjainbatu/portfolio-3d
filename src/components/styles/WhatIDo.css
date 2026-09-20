@@ -38,14 +38,16 @@
 
 .what-box-in {
   flex-direction: column;
-  height: 500px;
-  margin-left: 200px;
+  /* Tall enough for the copy, but never taller than the viewport it is
+     centred in — short laptop screens would otherwise clip the stack. */
+  height: min(640px, 78vh);
+  margin-left: 60px;
   position: relative;
   display: flex;
 }
 
 .what-content {
-  width: 450px;
+  width: 600px;
   height: 33%;
   min-height: 50%;
   transition: 0.5s;
@@ -205,7 +207,7 @@
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  width: 450px;
+  width: 600px;
 }
 
 .what-border2 {
@@ -223,7 +225,7 @@
 }
 
 .what-border2 svg {
-  height: 500px;
+  height: 640px;
   top: 50%;
   transform: translateY(-50%);
   position: absolute;
@@ -231,7 +233,26 @@
 
 .what-content-in {
   height: 100%;
-  overflow: hidden;
+  overflow-y: auto;
+  /* Keep a long card's wheel gesture inside the card: `contain` stops the
+     scroll chaining to the page, and data-lenis-prevent (see WhatIDo.tsx)
+     stops Lenis swallowing it before it ever reaches this element. */
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+}
+
+.what-content-in::-webkit-scrollbar {
+  width: 4px;
+}
+
+.what-content-in::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.what-content-in::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.25);
+  border-radius: 4px;
 }
 
 .what-content-in h5 {
@@ -282,7 +303,7 @@
   }
 
   .what-box-in {
-    height: 400px;
+    height: min(620px, 78vh);
   }
 
   .what-content h3 {
@@ -291,7 +312,7 @@
 
   .what-content {
     padding: 30px;
-    width: 400px;
+    width: 520px;
   }
 
   .what-content p {
@@ -316,11 +337,11 @@
 
 @media only screen and (max-width: 1400px) {
   .what-box-in {
-    margin-left: 50px;
+    margin-left: 20px;
   }
 
   .what-content {
-    width: 380px;
+    width: 500px;
   }
 }
 
@@ -332,7 +353,7 @@
   }
 
   .what-box-in {
-    height: 500px;
+    height: 620px;
     margin-left: -50px;
   }
 
@@ -375,7 +396,7 @@
   }
 
   .what-box:last-child {
-    height: 500px;
+    height: 560px;
   }
 
   .what-box {
@@ -390,7 +411,7 @@
 
   .what-box-in {
     margin-left: 0px;
-    height: 450px;
+    height: 560px;
   }
 
   .what-content h5,

@@ -38,14 +38,15 @@ const Scene = () => {
       renderer.toneMappingExposure = 1;
       canvasDiv.current.appendChild(renderer.domElement);
 
+      // The robot is 4.6 units tall with its feet on the origin. This fov and
+      // zoom show ~0.231 units of height per unit of distance, so z=25 frames
+      // it at about 80% of the viewport; y sits at its vertical centre.
       const camera = new THREE.PerspectiveCamera(14.5, aspect, 0.1, 1000);
-      camera.position.z = 10;
-      camera.position.set(0, 13.1, 24.7);
+      camera.position.set(0, 2.3, 25);
       camera.zoom = 1.1;
       camera.updateProjectionMatrix();
 
       let headBone: THREE.Object3D | null = null;
-      let screenLight: any | null = null;
       let mixer: THREE.AnimationMixer;
 
       const clock = new THREE.Clock();
@@ -62,8 +63,15 @@ const Scene = () => {
           let character = gltf.scene;
           setChar(character);
           scene.add(character);
-          headBone = character.getObjectByName("spine006") || null;
-          screenLight = character.getObjectByName("screenlight") || null;
+          // The rig has a bone named "Head" and a skinned mesh, also named
+          // "Head", parented to it. getObjectByName returns the bone today
+          // only because the mesh sits below it in the tree — ask for the
+          // bone explicitly so a re-export cannot silently flip this.
+          character.traverse((obj: THREE.Object3D) => {
+            if (!headBone && (obj as THREE.Bone).isBone && obj.name === "Head") {
+              headBone = obj;
+            }
+          });
           progress.loaded().then(() => {
             setTimeout(() => {
               light.turnOnLights();
@@ -118,7 +126,6 @@ const Scene = () => {
             interpolation.y,
             THREE.MathUtils.lerp
           );
-          light.setPointLight(screenLight);
         }
         const delta = clock.getDelta();
         if (mixer) {
