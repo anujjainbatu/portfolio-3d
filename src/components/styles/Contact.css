@@ -137,20 +137,3 @@ a.contact-social {
     width: calc(100% - 25px);
   }
 }
-
-.contact-credit {
-  margin-top: 12px;
-  font-size: 12px;
-  font-weight: 200;
-  color: #6f6c72;
-}
-
-.contact-credit a {
-  color: #8f8b94;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
-.contact-credit a:hover {
-  color: var(--accentColor);
-}

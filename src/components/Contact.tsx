@@ -110,18 +110,6 @@ const Contact = () => {
             <h5>
               <MdCopyright /> {new Date().getFullYear()}
             </h5>
-            <p className="contact-credit">
-              3D template by{" "}
-              <a
-                href="https://github.com/red1-for-hek/portfolio-website"
-                target="_blank"
-                rel="noopener noreferrer"
-                data-cursor="disable"
-              >
-                Redoyanul Haque
-              </a>
-              , MIT
-            </p>
           </div>
         </div>
       </div>

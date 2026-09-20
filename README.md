@@ -53,11 +53,9 @@ Once the domain is live, fill in the canonical and `og:url` tags in
 
 ## Credits
 
-This is not a from-scratch design. See [`LICENSES.md`](LICENSES.md) for full
-notices.
+Third-party notices are in [`LICENSES.md`](LICENSES.md).
 
-- **3D portfolio template** by [Redoyanul Haque](https://github.com/red1-for-hek/portfolio-website), MIT.
-  The layout, 3D scene and animation come from his open-source template; the
-  content, structure and components here are mine.
 - **Chess engine**: [stockfish.js](https://github.com/niklasf/stockfish.js) by
   Niklas Fiekas, **GPLv3**, shipped unmodified. Not my work.
+- **3D model**: RobotExpressive, from the three.js examples — by Tomás Laulhé,
+  modified by Don McCurdy. CC0.

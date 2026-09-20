@@ -3,18 +3,6 @@
 This site is MIT licensed (see `LICENSE`). It ships the following third-party
 work, under the terms below.
 
-## 3D portfolio template
-
-The layout, 3D scene, GSAP animation and CSS in this repository derive from the
-open-source 3D developer portfolio by **Redoyanul Haque**, MIT licensed.
-
-- Source: https://github.com/red1-for-hek/portfolio-website
-- License: MIT — the copyright notice is preserved in `LICENSE`.
-
-The hero 3D character that shipped with that template has been removed; the
-model now used is credited below. The scroll choreography in
-`src/components/utils/GsapScroll.ts` still derives from the template.
-
 ## 3D model — `public/models/RobotExpressive.glb`
 
 The hero model is **RobotExpressive**, taken unmodified from the three.js
