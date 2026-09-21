@@ -219,6 +219,7 @@ export const config = {
     email: "anujjainbatu@gmail.com",
     github: "https://github.com/anujjainbatu",
     linkedin: "https://linkedin.com/in/anujjainbatu",
+    whatsapp: "https://wa.me/918897817236",
     resume: "/anuj-jain-resume.pdf",
   },
 

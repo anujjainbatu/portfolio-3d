@@ -75,7 +75,7 @@ const SocialIcons = () => {
       <div className="bottom-links">
         <a
           className="bottom-link"
-          href={config.contact.linkedin}
+          href={config.contact.whatsapp}
           target="_blank"
           rel="noopener noreferrer"
         >
