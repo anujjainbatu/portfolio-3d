@@ -8,8 +8,13 @@ export function initialFX() {
     lenis.start();
   }
   document.getElementsByTagName("main")[0].classList.add("main-active");
+  // Read the theme token rather than repeating its value: hardcoding it here
+  // is what made the page fade back to the pre-space background on load.
+  const baseBackground = getComputedStyle(document.documentElement)
+    .getPropertyValue("--backgroundColor")
+    .trim();
   gsap.to("body", {
-    backgroundColor: "#0b080c",
+    backgroundColor: baseBackground || "#05070d",
     duration: 0.5,
     delay: 1,
   });

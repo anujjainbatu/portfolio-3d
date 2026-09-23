@@ -48,7 +48,7 @@
   font-size: 0.55em;
   line-height: 1.5;
   font-weight: 300;
-  color: #cfc9d3;
+  color: var(--muted);
 }
 
 .about-stats {
@@ -57,7 +57,7 @@
   gap: 26px 34px;
   margin-top: 40px;
   padding-top: 30px;
-  border-top: 1px solid #363636;
+  border-top: 1px solid var(--line);
 }
 
 .about-stat {
@@ -79,7 +79,7 @@
   font-size: 14px;
   font-weight: 200;
   line-height: 1.4;
-  color: #adacac;
+  color: var(--muted);
 }
 
 @media only screen and (min-width: 600px) {

@@ -1,9 +1,12 @@
 import * as THREE from "three";
-import { RGBELoader } from "three-stdlib";
+import { RoomEnvironment } from "three-stdlib";
 import { gsap } from "gsap";
 
-const setLighting = (scene: THREE.Scene) => {
-  const directionalLight = new THREE.DirectionalLight(0xc7a9ff, 0);
+const setLighting = (scene: THREE.Scene, renderer: THREE.WebGLRenderer) => {
+  // Near-white key. It was blue while the robot was orange and the blue read as
+  // a complement; against the titanium shell it cancelled the grey, so the key
+  // is neutral now and the point light below carries the scene's blue.
+  const directionalLight = new THREE.DirectionalLight(0xdce6f5, 0);
   directionalLight.intensity = 0;
   directionalLight.position.set(-0.47, -0.32, -1);
   directionalLight.castShadow = true;
@@ -14,26 +17,38 @@ const setLighting = (scene: THREE.Scene) => {
   scene.add(directionalLight);
 
   // Was driven by the old monitor mesh, flickering with the screen. With the
-  // screen gone it is a plain purple fill light, ramped up by turnOnLights.
-  const pointLight = new THREE.PointLight(0xc2a4ff, 0, 100, 3);
+  // screen gone it is a plain blue fill light, ramped up by turnOnLights.
+  const pointLight = new THREE.PointLight(0x60a5fa, 0, 100, 3);
   pointLight.position.set(3, 8, 6);
   pointLight.castShadow = true;
   scene.add(pointLight);
 
-  new RGBELoader()
-    .setPath("/models/")
-    .load("char_enviorment.hdr", function (texture) {
-      texture.mapping = THREE.EquirectangularReflectionMapping;
-      scene.environment = texture;
-      scene.environmentIntensity = 0;
-      scene.environmentRotation.set(5.76, 85.85, 1);
-    });
+  /**
+   * Neutral studio environment, generated rather than loaded.
+   *
+   * This replaced char_enviorment.hdr, which averages magenta in linear space
+   * (R 1.00, G 0.56, B 0.96) — a leftover of the pre-space theme. The stock
+   * orange shell hid that, but the titanium one mirrored it as a pink rim no
+   * amount of light-tinting could remove, because it came from the reflections
+   * rather than the lights.
+   *
+   * RoomEnvironment is greyscale throughout (white point light, area lights
+   * built with setScalar), so metals get something to reflect without any
+   * colour cast, and the blue comes from the point light alone. It also drops
+   * a ~290KB texture fetch off the critical path.
+   */
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  // three-stdlib exports RoomEnvironment as a factory, not a class — no `new`.
+  const envTarget = pmrem.fromScene(RoomEnvironment(), 0.04);
+  scene.environment = envTarget.texture;
+  scene.environmentIntensity = 0;
+  pmrem.dispose();
 
   const duration = 2;
   const ease = "power2.inOut";
   function turnOnLights() {
     gsap.to(scene, {
-      environmentIntensity: 0.64,
+      environmentIntensity: 0.55,
       duration: duration,
       ease: ease,
     });

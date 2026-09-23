@@ -4,7 +4,7 @@
   margin-top: 0;
   position: relative;
   z-index: 1;
-  background-color: var(--backgroundColor);
+  background-color: transparent;
   min-height: 60vh;
   display: flex;
   flex-direction: column;
@@ -36,9 +36,33 @@
   margin-bottom: 15px;
   font-size: 14px;
 }
+/* The section is a 1200px content column, but the veil that masks the pinned
+   Work section scrolling underneath it has to span the viewport — painted on
+   the section itself it reads as a dark rectangle with starfield either side.
+   z-index: -1 keeps it behind this section's own content while staying above
+   the page, because .contact-section's own z-index: 1 opens a stacking
+   context for it. */
+.contact-section::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100vw;
+  z-index: -1;
+  pointer-events: none;
+  background-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    var(--veil) 120px,
+    var(--veil) 100%
+  );
+}
+
 a.contact-social {
   font-size: 16px;
-  border-bottom: 1px solid #ccc;
+  border-bottom: 1px solid var(--line);
   margin-bottom: 8px;
 }
 .contact-box h2 {
@@ -56,7 +80,7 @@ a.contact-social {
   line-height: 14px;
   display: flex;
   gap: 8px;
-  opacity: 0.5;
+  opacity: 0.6;
 }
 @media only screen and (min-width: 600px) {
   .contact-section h3 {

@@ -1,30 +1,50 @@
 .portfolio-chat {
+  /* --------------------------------------------------------------- Colour
+
+     Three of these come straight from the global token block in index.css
+     rather than being restated: the primary blue is --accentColor (#60a5fa),
+     the ink is --star (#f8fafc) and the secondary ink is --muted (#94a3b8).
+     Only what is specific to the glass panel is declared here. */
+
   /* Surfaces and lines */
-  --chat-surface: rgba(18, 13, 21, 0.98);
-  --chat-raised: rgba(255, 255, 255, 0.055);
+  --chat-bg: #050816;
+  --chat-surface: rgba(15, 23, 42, 0.75);
+  --chat-glass: rgba(17, 24, 39, 0.5);
+  --chat-raised: rgba(255, 255, 255, 0.06);
+  --chat-input: rgba(255, 255, 255, 0.08);
   /* The assistant bubble's colour, flattened — needed where a gradient has to
-     mask against it (see the table scroll shadows). */
-  --chat-bubble-solid: #241f27;
-  --chat-border: rgba(194, 164, 255, 0.22);
-  --chat-border-soft: rgba(194, 164, 255, 0.1);
-  --chat-accent-wash: rgba(194, 164, 255, 0.07);
-  --chat-accent-wash-strong: rgba(194, 164, 255, 0.14);
+     mask against it (see the table scroll shadows). Recomputed for the glass
+     panel: --chat-raised over --chat-surface over the page void. A stale value
+     here shows up as a seam at the edge of a scrolling table. */
+  --chat-bubble-solid: #1c2130;
+  --chat-border: rgba(255, 255, 255, 0.12);
+  --chat-border-soft: rgba(255, 255, 255, 0.07);
+  --chat-accent-wash: rgba(96, 165, 250, 0.07);
+  --chat-accent-wash-strong: rgba(96, 165, 250, 0.14);
+
+  /* Signal */
+  --chat-glow: #2563eb;
+  --chat-grad-from: #1d4ed8;
+  --chat-grad-to: #2563eb;
 
   /* Ink */
-  --chat-ink: #eae5ec;
+  --chat-ink: var(--star);
   --chat-ink-strong: #fff;
-  --chat-muted: rgba(234, 229, 236, 0.72);
-  --chat-on-accent: #0b080c;
+  --chat-muted: var(--muted);
+  /* Text now sits on a blue gradient rather than a light lavender fill, so
+     this flipped from near-black to near-white. */
+  --chat-on-accent: #f8fafc;
 
-  /* Type scale — nothing below 12px. */
-  --chat-text-title: 16px;
+  /* Type scale — nothing below 12px, except the tracked-out eyebrow. */
+  --chat-text-title: 17px;
   --chat-text-body: 15px;
   --chat-text-chip: 13px;
   --chat-text-meta: 12px;
+  --chat-text-eyebrow: 10px;
 
   /* Rhythm */
-  --chat-radius: 20px;
-  --chat-radius-bubble: 16px;
+  --chat-radius: 24px;
+  --chat-radius-bubble: 18px;
   --chat-radius-control: 12px;
   --chat-gap: 14px;
   --chat-pad: 18px;
@@ -86,10 +106,23 @@ html.chat-modal-open body {
 
 .portfolio-chat__launcher:focus-visible,
 .portfolio-chat__dialog button:focus-visible,
-.portfolio-chat__dialog a:focus-visible,
-.portfolio-chat__dialog textarea:focus-visible {
+.portfolio-chat__dialog a:focus-visible {
   outline: 3px solid #fff;
   outline-offset: 2px;
+}
+
+/* The composer textarea is borderless inside the pill, so a rectangular ring
+   on it would cut across the rounded shape — and the panel autofocuses the
+   field on open, so the shared 3px white ring would be the loudest thing on
+   screen almost all the time.
+
+   :focus-visible does not help here: browsers match it on a text field even
+   for mouse focus, because the field takes keyboard input regardless of how it
+   was reached. So the pill carries its own indicator instead — a 2px accent
+   ring plus glow, which clears the 3:1 that WCAG 2.4.11 asks of a focus
+   indicator against both the pill fill and the panel behind it. */
+.portfolio-chat__dialog textarea:focus-visible {
+  outline: 0;
 }
 
 .portfolio-chat__launcher > span,
@@ -107,7 +140,7 @@ html.chat-modal-open body {
   inset: 0;
   z-index: 1;
   border: 0;
-  background: rgba(0, 0, 0, 0.18);
+  background: color-mix(in srgb, var(--chat-bg) 42%, transparent);
   cursor: default;
   pointer-events: auto;
 }
@@ -117,7 +150,7 @@ html.chat-modal-open body {
   z-index: 2;
   right: max(15px, calc((100vw - 1920px) / 2));
   bottom: max(24px, env(safe-area-inset-bottom));
-  width: min(440px, calc(100vw - 32px));
+  width: min(420px, calc(100vw - 32px));
   height: min(720px, calc(100svh - 48px));
   display: flex;
   flex-direction: column;
@@ -126,9 +159,11 @@ html.chat-modal-open body {
   background: var(--chat-surface);
   border: 1px solid var(--chat-border);
   border-radius: var(--chat-radius);
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.65), 0 0 50px rgba(194, 164, 255, 0.12);
-  backdrop-filter: blur(18px);
-  animation: portfolio-chat-in 180ms ease-out both;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.65),
+    0 0 40px rgba(59, 130, 246, 0.15);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  animation: portfolio-chat-in 320ms cubic-bezier(0.22, 1.2, 0.36, 1) both;
   transition: width 220ms cubic-bezier(0.22, 1, 0.36, 1);
   pointer-events: auto;
 }
@@ -140,19 +175,19 @@ html.chat-modal-open body {
 @keyframes portfolio-chat-in {
   from {
     opacity: 0;
-    transform: translateY(12px) scale(0.98);
+    transform: translateY(18px) scale(0.94);
   }
 }
 
 /* ------------------------------------------------------------------ Header */
 
 .portfolio-chat__header {
-  padding: 12px 10px 12px var(--chat-pad);
+  padding: 14px 10px 14px var(--chat-pad);
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 12px;
   border-bottom: 1px solid var(--chat-border);
-  background: var(--chat-accent-wash);
+  background: var(--chat-glass);
 }
 
 .portfolio-chat__identity {
@@ -166,22 +201,186 @@ html.chat-modal-open body {
 }
 
 .portfolio-chat__identity h2 {
-  font-size: var(--chat-text-title);
-  font-weight: 650;
-  line-height: 1.3;
-}
-
-.portfolio-chat__identity p {
-  margin-top: 3px;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
+  color: var(--chat-ink);
+  font-size: var(--chat-text-title);
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+.portfolio-chat__eyebrow {
+  color: var(--chat-muted);
+  font-size: var(--chat-text-eyebrow);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.portfolio-chat__role {
+  margin-top: 1px;
   overflow: hidden;
   color: var(--chat-muted);
   font-size: var(--chat-text-meta);
   line-height: 1.4;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+.portfolio-chat__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--signal);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.portfolio-chat__status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--signal);
+  box-shadow: 0 0 7px rgba(94, 226, 176, 0.9);
+  animation: portfolio-chat-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes portfolio-chat-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* ------------------------------------------------------------------ Avatar */
+
+.portfolio-chat__avatar {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  animation: portfolio-chat-avatar-in 520ms cubic-bezier(0.22, 1.2, 0.36, 1) both;
+}
+
+/* The ring sits under the head and turns slowly, so the avatar reads as
+   powered rather than as a static icon. */
+.portfolio-chat__avatar-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    var(--chat-glow) 90deg,
+    var(--accentColor) 180deg,
+    transparent 300deg
+  );
+  -webkit-mask: radial-gradient(circle, transparent 62%, #000 64%);
+  mask: radial-gradient(circle, transparent 62%, #000 64%);
+  animation: portfolio-chat-ring 6s linear infinite;
+}
+
+.portfolio-chat__avatar-svg {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 35%, #1b2436, #0b0f1a);
+}
+
+/* The three materials from the hero robot, in the same roles. */
+.portfolio-chat__avatar-shell {
+  fill: #6b7280;
+}
+
+.portfolio-chat__avatar-panel {
+  fill: #111827;
+}
+
+.portfolio-chat__avatar-trim {
+  fill: #cbd5e1;
+}
+
+.portfolio-chat__avatar-eye {
+  fill: var(--accent-strong);
+  animation: portfolio-chat-eye 3.2s ease-in-out infinite;
+}
+
+@keyframes portfolio-chat-eye {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 2px var(--accent-strong));
+  }
+  50% {
+    filter: drop-shadow(0 0 5px var(--accentColor));
+  }
+}
+
+@keyframes portfolio-chat-ring {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes portfolio-chat-avatar-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.7);
+  }
+}
+
+/* Four sparks that drift outward once as the panel opens. transform and
+   opacity only, so they stay on the compositor. */
+.portfolio-chat__avatar-spark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--accentColor);
+  box-shadow: 0 0 6px var(--accentColor);
+  opacity: 0;
+  animation: portfolio-chat-spark 1.5s ease-out both;
+}
+
+.portfolio-chat__avatar-spark:nth-child(3) {
+  --spark-x: -20px;
+  --spark-y: -16px;
+  animation-delay: 120ms;
+}
+
+.portfolio-chat__avatar-spark:nth-child(4) {
+  --spark-x: 20px;
+  --spark-y: -12px;
+  animation-delay: 240ms;
+}
+
+.portfolio-chat__avatar-spark:nth-child(5) {
+  --spark-x: -16px;
+  --spark-y: 18px;
+  animation-delay: 60ms;
+}
+
+.portfolio-chat__avatar-spark:nth-child(6) {
+  --spark-x: 18px;
+  --spark-y: 16px;
+  animation-delay: 300ms;
+}
+
+@keyframes portfolio-chat-spark {
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--spark-x, 0), var(--spark-y, 0)) scale(0.4);
+  }
 }
 
 .portfolio-chat__badge {
@@ -235,7 +434,7 @@ html.chat-modal-open body {
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
-  scrollbar-color: rgba(194, 164, 255, 0.35) transparent;
+  scrollbar-color: rgba(96, 165, 250, 0.35) transparent;
 }
 
 .portfolio-chat__empty {
@@ -244,11 +443,29 @@ html.chat-modal-open body {
   gap: 10px;
 }
 
+/* The welcome reads as the assistant's first turn, so it takes the assistant
+   bubble's shape — including the clipped bottom-left tail. */
 .portfolio-chat__welcome {
   margin: 0;
+  align-self: flex-start;
+  max-width: 88%;
+  padding: 13px 16px;
   color: var(--chat-ink);
+  background: var(--chat-raised);
+  border-radius: var(--chat-radius-bubble) var(--chat-radius-bubble)
+    var(--chat-radius-bubble) 4px;
   font-size: var(--chat-text-body);
   line-height: 1.55;
+}
+
+.portfolio-chat__disclosure {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--chat-muted);
+  font-size: var(--chat-text-meta);
+  line-height: 1.4;
 }
 
 .portfolio-chat__starters-label {
@@ -277,22 +494,35 @@ html.chat-modal-open body {
   padding: 11px 14px;
   display: flex;
   align-items: center;
-  color: #d9c9ff;
-  background: var(--chat-accent-wash);
-  border: 1px solid rgba(194, 164, 255, 0.2);
-  border-radius: var(--chat-radius-control);
+  gap: 9px;
+  color: var(--chat-ink);
+  background: transparent;
+  border: 1px solid rgba(96, 165, 250, 0.35);
+  border-radius: 999px;
   cursor: pointer;
   font-size: var(--chat-text-chip);
   line-height: 1.45;
   text-align: left;
-  transition: color 150ms ease, background 150ms ease, border-color 150ms ease;
+  /* No layout properties animate here — a chip that resized on hover would
+     reflow the whole starter list under the pointer. */
+  transition: color 180ms ease, background 180ms ease, border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.portfolio-chat__starters button > span,
+.portfolio-chat__followups button > span {
+  flex: 0 0 auto;
+  color: var(--accentColor);
+  font-size: 12px;
+  line-height: 1;
 }
 
 .portfolio-chat__starters button:hover,
 .portfolio-chat__followups button:hover {
   color: var(--chat-ink-strong);
-  background: var(--chat-accent-wash-strong);
-  border-color: rgba(194, 164, 255, 0.45);
+  background: var(--chat-accent-wash);
+  border-color: var(--accentColor);
+  box-shadow: 0 0 18px rgba(96, 165, 250, 0.22);
 }
 
 .portfolio-chat__followups {
@@ -327,15 +557,22 @@ html.chat-modal-open body {
 }
 
 .portfolio-chat__message--assistant {
-  color: rgba(255, 255, 255, 0.94);
-  background: rgba(255, 255, 255, 0.075);
-  border-bottom-left-radius: 6px;
+  color: var(--chat-ink);
+  background: var(--chat-raised);
+  border-bottom-left-radius: 4px;
 }
 
+/* The gradient runs one stop darker than the brief's #2563EB → #3B82F6: white
+   on #3B82F6 measures 3.64:1, under AA. This pairing holds 5.1:1 and reads the
+   same at a glance. */
 .portfolio-chat__message--user {
   color: var(--chat-on-accent);
-  background: var(--accentColor);
-  border-bottom-right-radius: 6px;
+  background: linear-gradient(
+    135deg,
+    var(--chat-grad-from),
+    var(--chat-grad-to)
+  );
+  border-bottom-right-radius: 4px;
   white-space: pre-wrap;
 }
 
@@ -384,7 +621,7 @@ html.chat-modal-open body {
 .portfolio-chat__message--assistant code {
   padding: 1px 5px;
   color: #e3d4ff;
-  background: rgba(194, 164, 255, 0.13);
+  background: rgba(96, 165, 250, 0.13);
   border-radius: 5px;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.88em;
@@ -415,7 +652,7 @@ html.chat-modal-open body {
   border-radius: 10px;
   overscroll-behavior-x: contain;
   scrollbar-width: thin;
-  scrollbar-color: rgba(194, 164, 255, 0.35) transparent;
+  scrollbar-color: rgba(96, 165, 250, 0.35) transparent;
   /* Edge shadows that appear only while there is more table to scroll to: the
      masking gradients scroll with the content (`local`) and cover the shadows
      when the table is at either end. */
@@ -441,7 +678,7 @@ html.chat-modal-open body {
 }
 
 .portfolio-chat__table::-webkit-scrollbar-thumb {
-  background: rgba(194, 164, 255, 0.35);
+  background: rgba(96, 165, 250, 0.35);
   border-radius: 999px;
 }
 
@@ -678,27 +915,49 @@ html.chat-modal-open body {
 /* ---------------------------------------------------------------- Composer */
 
 .portfolio-chat__composer {
-  padding: 12px var(--chat-pad);
+  padding: 12px var(--chat-pad) 14px;
   display: flex;
   align-items: flex-end;
   flex-wrap: wrap;
   gap: 8px;
   border-top: 1px solid var(--chat-border);
-  background: rgba(0, 0, 0, 0.22);
+  background: var(--chat-glass);
 }
 
+.portfolio-chat__composer-field {
+  min-height: 56px;
+  flex: 1 1 100%;
+  box-sizing: border-box;
+  padding: 8px 8px 8px 12px;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  background: var(--chat-input);
+  border: 1px solid var(--chat-border);
+  border-radius: 28px;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.portfolio-chat__composer-field:focus-within {
+  border-color: var(--accentColor);
+  box-shadow: 0 0 0 1px var(--accentColor),
+    0 0 22px rgba(37, 99, 235, 0.3);
+}
+
+/* One pill holding the field and the send button, rather than two controls
+   sitting next to each other. The textarea still auto-grows from
+   growComposer(), so max-height keeps a long question from eating the panel. */
 .portfolio-chat__composer textarea {
-  min-height: 46px;
-  max-height: 180px;
+  min-height: 34px;
+  max-height: 168px;
   flex: 1;
   box-sizing: border-box;
   resize: none;
   overflow-y: auto;
-  padding: 12px 14px;
-  color: #fff;
-  background: var(--chat-raised);
-  border: 1px solid rgba(194, 164, 255, 0.18);
-  border-radius: var(--chat-radius-control);
+  padding: 7px 4px 7px 10px;
+  color: var(--chat-ink);
+  background: transparent;
+  border: 0;
   outline: 0;
   font-size: var(--chat-text-body);
   line-height: 1.5;
@@ -706,30 +965,34 @@ html.chat-modal-open body {
 }
 
 .portfolio-chat__composer textarea::placeholder {
-  color: rgba(255, 255, 255, 0.42);
+  color: var(--chat-muted);
 }
 
-.portfolio-chat__composer textarea:focus {
-  border-color: var(--accentColor);
-}
-
-.portfolio-chat__composer > button {
-  width: 46px;
-  height: 46px;
+.portfolio-chat__composer-field > button {
+  width: 40px;
+  height: 40px;
   flex: 0 0 auto;
   display: grid;
   place-items: center;
   color: var(--chat-on-accent);
-  background: var(--accentColor);
+  background: linear-gradient(
+    135deg,
+    var(--chat-grad-from),
+    var(--chat-grad-to)
+  );
   border: 0;
-  border-radius: var(--chat-radius-control);
+  border-radius: 50%;
   cursor: pointer;
   font-size: 18px;
-  transition: opacity 150ms ease;
+  transition: opacity 150ms ease, box-shadow 180ms ease;
 }
 
-.portfolio-chat__composer > button:disabled {
-  opacity: 0.45;
+.portfolio-chat__composer-field > button:not(:disabled):hover {
+  box-shadow: 0 0 18px rgba(37, 99, 235, 0.55);
+}
+
+.portfolio-chat__composer-field > button:disabled {
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
@@ -753,19 +1016,46 @@ html.chat-modal-open body {
   border-top: 1px solid var(--chat-border-soft);
 }
 
+.portfolio-chat__ready {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--chat-muted);
+  font-size: var(--chat-text-meta);
+  letter-spacing: 0.04em;
+}
+
+.portfolio-chat__ready-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--signal);
+  box-shadow: 0 0 7px rgba(94, 226, 176, 0.85);
+}
+
+.portfolio-chat__link-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .portfolio-chat__links a {
+  width: 38px;
   min-height: 38px;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  justify-content: center;
   color: var(--chat-muted);
-  font-size: var(--chat-text-meta);
+  border-radius: 10px;
+  font-size: 15px;
   text-decoration: none;
-  transition: color 150ms ease;
+  transition: color 150ms ease, background 150ms ease;
 }
 
 .portfolio-chat__links a:hover {
   color: var(--accentColor);
+  background: var(--chat-accent-wash);
 }
 
 .sr-only {
@@ -847,6 +1137,10 @@ html.chat-modal-open body {
   }
 }
 
+/* This blanket rule predates the glass redesign and already covers everything
+   it added — the panel's scale-in, the avatar's ring and eye pulse, the opening
+   sparks and the status dot. The sparks rest at opacity 0, so stopping their
+   animation leaves them invisible rather than frozen mid-flight. */
 @media (prefers-reduced-motion: reduce) {
   .portfolio-chat *,
   .portfolio-chat *::before,

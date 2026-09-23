@@ -1,0 +1,140 @@
+/* ---------------------------------------------------------------------------
+   Starfield backdrop.
+
+   One fixed, decorative layer behind the whole page. z-index: -1 paints it
+   above the root background and below every piece of content, so nothing
+   else in the project needs its stacking order touched — .container-main is
+   position: relative with no z-index and no transform, so it creates no
+   stacking context and the negative index reaches the root as intended.
+
+   Stars are tiled radial-gradients rather than the usual box-shadow-dots
+   trick: a handful of gradient stops repeated by background-size costs one
+   paint instead of hundreds of shadow rasterisations.
+
+   Each layer drifts by exactly one tile, so the loop is seamless. Only
+   transform is animated, which keeps the whole thing on the compositor
+   alongside the Three.js canvas.
+   --------------------------------------------------------------------------- */
+
+.starfield {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+  background-color: var(--void);
+}
+
+/* Nebula blooms. Static — a drifting nebula reads as a moving background
+   rather than depth, and these are large enough that any motion is obvious.
+
+   Deliberately very low alpha. This layer is fixed, so it holds one screen
+   position while the page scrolls past it; any section that paints an opaque
+   background (the TechStack video, Contact's veil) slices through it, and the
+   brighter the bloom the more that slice reads as a hard horizontal seam at
+   the section edge. At these values the step is below perception and the
+   stars carry the effect. */
+.starfield::before {
+  content: "";
+  position: absolute;
+  inset: -10%;
+  background:
+    radial-gradient(
+      ellipse 85% 70% at 12% 18%,
+      rgba(29, 78, 216, 0.055) 0%,
+      transparent 72%
+    ),
+    radial-gradient(
+      ellipse 80% 65% at 92% 72%,
+      rgba(59, 130, 246, 0.04) 0%,
+      transparent 74%
+    ),
+    radial-gradient(
+      ellipse 100% 60% at 50% 104%,
+      rgba(37, 99, 235, 0.03) 0%,
+      transparent 78%
+    );
+  pointer-events: none;
+}
+
+.starfield-layer {
+  position: absolute;
+  /* One extra tile of height above the viewport, so the drift can translate a
+     full tile downward without ever exposing an unpainted edge. */
+  left: 0;
+  right: 0;
+  top: -1200px;
+  bottom: -1200px;
+  will-change: transform;
+}
+
+/* Far field: dense, dim, slow. */
+.starfield-far {
+  background-image:
+    radial-gradient(1px 1px at 37px 84px, rgba(248, 250, 252, 0.55), transparent),
+    radial-gradient(1px 1px at 152px 231px, rgba(248, 250, 252, 0.4), transparent),
+    radial-gradient(1px 1px at 286px 47px, rgba(248, 250, 252, 0.5), transparent),
+    radial-gradient(1px 1px at 91px 318px, rgba(248, 250, 252, 0.35), transparent),
+    radial-gradient(1px 1px at 341px 276px, rgba(248, 250, 252, 0.45), transparent),
+    radial-gradient(1px 1px at 214px 163px, rgba(248, 250, 252, 0.3), transparent),
+    radial-gradient(1px 1px at 12px 199px, rgba(248, 250, 252, 0.4), transparent);
+  background-size: 400px 400px;
+  animation: starfield-drift-far 300s linear infinite;
+}
+
+/* Mid field: sparser, brighter, faintly blue. */
+.starfield-mid {
+  background-image:
+    radial-gradient(1.4px 1.4px at 118px 96px, rgba(191, 219, 254, 0.75), transparent),
+    radial-gradient(1.4px 1.4px at 512px 402px, rgba(248, 250, 252, 0.7), transparent),
+    radial-gradient(1.4px 1.4px at 297px 588px, rgba(191, 219, 254, 0.6), transparent),
+    radial-gradient(1.4px 1.4px at 646px 173px, rgba(248, 250, 252, 0.65), transparent),
+    radial-gradient(1.4px 1.4px at 61px 461px, rgba(191, 219, 254, 0.55), transparent);
+  background-size: 700px 700px;
+  animation: starfield-drift-mid 190s linear infinite;
+}
+
+/* Near field: a few bright stars with a glow, moving fastest. */
+.starfield-near {
+  background-image:
+    radial-gradient(2px 2px at 214px 158px, rgba(248, 250, 252, 0.95), transparent),
+    radial-gradient(2px 2px at 887px 642px, rgba(147, 197, 253, 0.9), transparent),
+    radial-gradient(2px 2px at 456px 921px, rgba(248, 250, 252, 0.85), transparent),
+    radial-gradient(2px 2px at 1012px 318px, rgba(147, 197, 253, 0.8), transparent);
+  background-size: 1100px 1100px;
+  animation: starfield-drift-near 120s linear infinite;
+}
+
+@keyframes starfield-drift-far {
+  to {
+    transform: translate3d(0, 400px, 0);
+  }
+}
+
+@keyframes starfield-drift-mid {
+  to {
+    transform: translate3d(0, 700px, 0);
+  }
+}
+
+@keyframes starfield-drift-near {
+  to {
+    transform: translate3d(0, 1100px, 0);
+  }
+}
+
+/* Mobile carries the whole page in one scroll with no 3D canvas to share the
+   compositor with, but three full-viewport layers is still more than the
+   effect needs at that size. Drop the near field. */
+@media only screen and (max-width: 768px) {
+  .starfield-near {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .starfield-layer {
+    animation: none;
+    will-change: auto;
+  }
+}

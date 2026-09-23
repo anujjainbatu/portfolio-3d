@@ -7,8 +7,8 @@
   font-style: normal;
   line-height: 1.5;
   scroll-behavior: smooth;
-  color-scheme: light dark;
-  color: #eae5ec;
+  color-scheme: dark;
+  color: var(--ink);
   background-color: var(--backgroundColor);
 
   font-synthesis: none;
@@ -18,8 +18,48 @@
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
-  --accentColor: #c2a4ff;
-  --backgroundColor: #0b080c;
+
+  /* ---------------------------------------------------------------------
+     Space theme — launch blue / aerospace.
+
+     Surfaces run from the void outward. The accent splits in two: the
+     lighter --accentColor carries accent-coloured *text* (7.7:1 on the
+     void, so it clears AA at any size), while --accent-strong is reserved
+     for fills, glows and gradient stops where contrast is not a concern.
+
+     --accentColor and --backgroundColor keep their template names on
+     purpose: they are referenced ~40 times across the stylesheets and in
+     the global a:hover rule, so retargeting beats renaming.
+     --------------------------------------------------------------------- */
+
+  /* Surfaces */
+  --void: #05070d;
+  --deep: #0a0d16;
+  --hull: #121724;
+  --panel: #1a2030;
+  --line: #212b40;
+  /* Near-opaque masking layer: enough to hide the pinned Work section
+     scrolling beneath Contact, sheer enough to keep the starfield alive. */
+  --veil: rgba(5, 7, 13, 0.92);
+
+  /* Signal */
+  --accentColor: #60a5fa;
+  --accent-strong: #3b82f6;
+  --accent-deep: #1d4ed8;
+  --accent-rgb: 96, 165, 250;
+
+  /* Type */
+  --star: #f8fafc;
+  --ink: #eef2fb;
+  --muted: #94a3b8;
+  --muted-dim: #64748b;
+  --on-accent: #05070d;
+
+  /* Status */
+  --signal: #5ee2b0;
+  --warn: #f59e0b;
+
+  --backgroundColor: var(--void);
   --vh: 100vh;
   --vh: 100svh;
 }
@@ -88,7 +128,7 @@ main {
 body {
   margin: 0;
   height: auto;
-  background-color: #000;
+  background-color: var(--void);
   flex-grow: 1;
   --cWidth: calc(100% - 30px);
   --cMaxWidth: 1920px;
@@ -127,65 +167,8 @@ body {
   flex-wrap: nowrap;
 }
 
-.techstack {
-  width: 100%;
-  position: relative;
-  height: var(--vh);
-  min-height: 100vh;
-  margin: 0 auto;
-  margin-top: 0;
-  margin-bottom: 0;
-  padding-top: 150px;
-  padding-bottom: 150px;
-  background: linear-gradient(180deg, rgba(11, 8, 12, 0.95) 0%, rgba(11, 8, 12, 0.98) 100%);
-  background-color: var(--backgroundColor);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-
-.techstack::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background:
-    radial-gradient(circle at 20% 50%, rgba(194, 164, 255, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 80% 50%, rgba(194, 164, 255, 0.08) 0%, transparent 50%);
-  pointer-events: none;
-  z-index: 0;
-}
-
-.techstack>* {
-  position: relative;
-  z-index: 1;
-}
-
-.techstack h2 {
-  font-size: 80px;
-  text-align: center;
-  position: absolute;
-  width: 100%;
-  top: 150px;
-  left: 0;
-  font-weight: 400;
-  text-transform: uppercase;
-  z-index: 3;
-  margin: 0;
-}
-
 @media screen and (min-width: 768px) {
   body {
     --cWidth: 94%;
-  }
-}
-
-@media screen and (max-width: 900px) {
-  .techstack h2 {
-    font-size: 40px;
   }
 }

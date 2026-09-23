@@ -9,7 +9,7 @@ import {
   FiMaximize2,
   FiMinimize2,
   FiRefreshCw,
-  FiSend,
+  FiArrowUp,
   FiSquare,
   FiTrash2,
   FiX,
@@ -17,16 +17,40 @@ import {
 import { TbMessage, TbNotes } from "react-icons/tb";
 import { config } from "../config";
 import HoverLinks from "../components/HoverLinks";
+import RobotAvatar from "./RobotAvatar";
 import { useChat } from "./ChatContext";
 import { renderMarkdown, stripMarkdown } from "./renderMarkdown";
 import "./ChatWidget.css";
 
+/**
+ * Chips show a short label but send — and announce — the full question.
+ *
+ * The label alone would make a poor prompt and a worse accessible name, so the
+ * button's aria-label carries the real question. Anything matching on these
+ * buttons therefore matches the question text, not the label.
+ */
 const SUGGESTED_QUESTIONS = [
-  "What is the strongest system Anuj has built?",
-  "Why is Anuj a good fit for solutions engineering?",
-  "Tell me about Anuj's career pivot.",
-  "How does Anuj approach a new problem?",
-  "What measurable impact has his work created?",
+  {
+    label: "Strongest AI system built",
+    question: "What is the strongest system Anuj has built?",
+  },
+  {
+    label: "Commerce automation projects",
+    question: "What commerce automation has Anuj built?",
+  },
+  {
+    label: "Engineering approach",
+    question: "How does Anuj approach a new problem?",
+  },
+  { label: "Career journey", question: "Tell me about Anuj's career pivot." },
+  {
+    label: "Fit for solutions engineering",
+    question: "Why is Anuj a good fit for solutions engineering?",
+  },
+  {
+    label: "Measurable impact",
+    question: "What measurable impact has his work created?",
+  },
 ];
 
 const WELCOME =
@@ -209,7 +233,7 @@ const ChatWidget = () => {
     const asked = new Set(
       messages.filter((message) => message.role === "user").map((m) => m.content),
     );
-    return SUGGESTED_QUESTIONS.filter((question) => !asked.has(question)).slice(0, 3);
+    return SUGGESTED_QUESTIONS.filter((item) => !asked.has(item.question)).slice(0, 3);
   }, [messages]);
 
   const showFollowUps =
@@ -267,16 +291,21 @@ const ChatWidget = () => {
             }`}
             role="dialog"
             aria-modal="true"
-            aria-labelledby="portfolio-chat-title"
+            aria-label="Anuj’s AI assistant"
             aria-describedby="portfolio-chat-disclosure"
           >
             <header className="portfolio-chat__header">
+              <RobotAvatar />
               <div className="portfolio-chat__identity">
-                <h2 id="portfolio-chat-title">Anuj’s AI assistant</h2>
-                <p id="portfolio-chat-disclosure">
-                  <span className="portfolio-chat__badge">AI</span>
-                  Answers from Anuj’s approved public profile
-                </p>
+                <p className="portfolio-chat__eyebrow">AI profile assistant</p>
+                <h2 id="portfolio-chat-title">
+                  Anuj AI
+                  <span className="portfolio-chat__status">
+                    <span className="portfolio-chat__status-dot" aria-hidden="true" />
+                    Online
+                  </span>
+                </h2>
+                <p className="portfolio-chat__role">Personal AI Assistant</p>
               </div>
               <button
                 type="button"
@@ -313,18 +342,30 @@ const ChatWidget = () => {
               {messages.length === 0 && (
                 <div className="portfolio-chat__empty">
                   <p className="portfolio-chat__welcome">{WELCOME}</p>
+                  {/* The AI disclosure is an honesty affordance, not decoration.
+                      It moved out of the header with the redesign but keeps its
+                      id so the dialog's aria-describedby still resolves. */}
+                  <p
+                    className="portfolio-chat__disclosure"
+                    id="portfolio-chat-disclosure"
+                  >
+                    <span className="portfolio-chat__badge">AI</span>
+                    Answers from Anuj’s approved public profile
+                  </p>
                   <p className="portfolio-chat__starters-label">Start with</p>
                   <ul
                     className="portfolio-chat__starters"
                     aria-label="Suggested questions"
                   >
-                    {SUGGESTED_QUESTIONS.map((question) => (
-                      <li key={question}>
+                    {SUGGESTED_QUESTIONS.slice(0, 4).map((item) => (
+                      <li key={item.question}>
                         <button
                           type="button"
-                          onClick={() => void askSuggestion(question)}
+                          aria-label={item.question}
+                          onClick={() => void askSuggestion(item.question)}
                         >
-                          {question}
+                          <span aria-hidden="true">✦</span>
+                          {item.label}
                         </button>
                       </li>
                     ))}
@@ -380,7 +421,7 @@ const ChatWidget = () => {
                     <span />
                   </span>
                   <span className="portfolio-chat__thinking-label">
-                    Reading Anuj’s profile…
+                    Anuj AI is thinking…
                   </span>
                   <button
                     type="button"
@@ -416,13 +457,15 @@ const ChatWidget = () => {
                 <div className="portfolio-chat__followups">
                   <p className="portfolio-chat__starters-label">Ask next</p>
                   <ul aria-label="Follow-up questions">
-                    {followUps.map((question) => (
-                      <li key={question}>
+                    {followUps.map((item) => (
+                      <li key={item.question}>
                         <button
                           type="button"
-                          onClick={() => void askSuggestion(question)}
+                          aria-label={item.question}
+                          onClick={() => void askSuggestion(item.question)}
                         >
-                          {question}
+                          <span aria-hidden="true">✦</span>
+                          {item.label}
                         </button>
                       </li>
                     ))}
@@ -441,26 +484,28 @@ const ChatWidget = () => {
               <label className="sr-only" htmlFor="portfolio-chat-input">
                 Ask a question about Anuj
               </label>
-              <textarea
-                ref={inputRef}
-                id="portfolio-chat-input"
-                rows={1}
-                maxLength={MAX_INPUT}
-                value={input}
-                onChange={(event) => {
-                  setInput(event.target.value);
-                  growComposer();
-                }}
-                onKeyDown={handleInputKeyDown}
-                placeholder="Ask about Anuj’s work…"
-              />
-              <button
-                type="submit"
-                disabled={status === "sending" || input.trim().length === 0}
-                aria-label="Send question"
-              >
-                <FiSend />
-              </button>
+              <div className="portfolio-chat__composer-field">
+                <textarea
+                  ref={inputRef}
+                  id="portfolio-chat-input"
+                  rows={1}
+                  maxLength={MAX_INPUT}
+                  value={input}
+                  onChange={(event) => {
+                    setInput(event.target.value);
+                    growComposer();
+                  }}
+                  onKeyDown={handleInputKeyDown}
+                  placeholder="Ask Anuj AI anything…"
+                />
+                <button
+                  type="submit"
+                  disabled={status === "sending" || input.trim().length === 0}
+                  aria-label="Send question"
+                >
+                  <FiArrowUp />
+                </button>
+              </div>
               {input.length >= COUNTER_THRESHOLD && (
                 <p className="portfolio-chat__counter" aria-live="polite">
                   {input.length} / {MAX_INPUT}
@@ -469,18 +514,48 @@ const ChatWidget = () => {
             </form>
 
             <footer className="portfolio-chat__links" aria-label="Anuj's public links">
-              <a href={`mailto:${config.contact.email}`} aria-label="Email Anuj">
-                <FiMail /> Email
-              </a>
-              <a href={config.contact.github} target="_blank" rel="noreferrer">
-                <FiGithub /> GitHub
-              </a>
-              <a href={config.contact.linkedin} target="_blank" rel="noreferrer">
-                <FiLinkedin /> LinkedIn
-              </a>
-              <a href={config.contact.resume} target="_blank" rel="noreferrer">
-                <FiFileText /> Résumé
-              </a>
+              <p className="portfolio-chat__ready">
+                <span className="portfolio-chat__ready-dot" aria-hidden="true" />
+                AI Ready
+              </p>
+              {/* These four are the way out of the chat for someone an answer
+                  just convinced, so they stay. Only their text labels drop. */}
+              <span className="portfolio-chat__link-row">
+                <a
+                  href={`mailto:${config.contact.email}`}
+                  aria-label="Email Anuj"
+                  title="Email"
+                >
+                  <FiMail />
+                </a>
+                <a
+                  href={config.contact.github}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="Anuj on GitHub"
+                  title="GitHub"
+                >
+                  <FiGithub />
+                </a>
+                <a
+                  href={config.contact.linkedin}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="Anuj on LinkedIn"
+                  title="LinkedIn"
+                >
+                  <FiLinkedin />
+                </a>
+                <a
+                  href={config.contact.resume}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="Anuj’s résumé"
+                  title="Résumé"
+                >
+                  <FiFileText />
+                </a>
+              </span>
             </footer>
           </section>
         </>

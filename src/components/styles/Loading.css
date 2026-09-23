@@ -2,8 +2,20 @@
   position: fixed;
   width: 100vw;
   height: var(--vh);
-  /* background-image: linear-gradient(#cbb1ff, #d8c4ff); */
-  background-color: #eae5ec;
+  /* Pre-launch: the loader runs dark so there is no white flash before a
+     dark site. Timings and the expanding-pill transition are unchanged. */
+  background-color: var(--void);
+  background-image:
+    radial-gradient(1px 1px at 37px 84px, rgba(248, 250, 252, 0.5), transparent),
+    radial-gradient(1px 1px at 152px 231px, rgba(248, 250, 252, 0.35), transparent),
+    radial-gradient(1px 1px at 286px 47px, rgba(248, 250, 252, 0.45), transparent),
+    radial-gradient(1px 1px at 341px 276px, rgba(248, 250, 252, 0.4), transparent),
+    radial-gradient(
+      ellipse 60% 50% at 50% 50%,
+      rgba(29, 78, 216, 0.18) 0%,
+      transparent 65%
+    );
+  background-size: 400px 400px, 400px 400px, 400px 400px, 400px 400px, 100% 100%;
   z-index: 999999999;
   display: flex;
   place-items: center;
@@ -12,7 +24,7 @@
 .loading-button {
   padding: 20px 50px;
   border-radius: 100px;
-  background-color: #000;
+  background-color: var(--hull);
   overflow: hidden;
   font-size: 18px;
   font-weight: 500;
@@ -21,7 +33,7 @@
 }
 .loading-button::before {
   content: "";
-  background-color: #ffffff;
+  background-color: var(--accentColor);
   top: var(--mouse-y);
   left: var(--mouse-x);
   border-radius: 50%;
@@ -48,11 +60,13 @@
   min-width: 0px;
   min-height: 0px;
   border-radius: 100px;
-  background-color: #000;
+  background-color: var(--hull);
+  border: 1px solid rgba(var(--accent-rgb), 0.35);
+  box-sizing: border-box;
   overflow: hidden;
   transition: 0.8s ease-in-out;
   transition-delay: 0.2s;
-  box-shadow: 0px 15px 15px 0px rgba(0, 0, 0, 0.2);
+  box-shadow: 0px 15px 40px 0px rgba(var(--accent-rgb), 0.18);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -70,7 +84,7 @@
   overflow: visible;
 }
 .loading-hover {
-  background-color: #a87cff;
+  background-color: var(--accent-strong);
   width: 250px;
   height: 120px;
   position: absolute;
@@ -92,7 +106,7 @@
 }
 .loading-content {
   position: relative;
-  background-color: #000;
+  background-color: var(--hull);
   width: 100%;
   overflow: hidden;
   transition: 0.6s;
@@ -137,7 +151,7 @@
   transform: translate(100%, -50%);
   width: 15px;
   height: 25px;
-  background-color: white;
+  background-color: var(--accentColor);
   animation: blink 1s linear infinite;
 }
 .loading-icon {
@@ -191,7 +205,7 @@
   left: 50%;
   transform: translateX(-50%);
   top: 0;
-  color: var(--backgroundColor);
+  color: var(--ink);
 }
 .loader-title {
   font-weight: 700;
@@ -257,7 +271,7 @@
   position: relative;
   width: 10px;
   height: 60px;
-  background-color: #000;
+  background-color: var(--line);
   display: block;
 }
 .loaderGame-line:nth-child(2n) {
@@ -272,7 +286,7 @@
   width: 15px;
   height: 15px;
   border-radius: 50%;
-  background-color: #a87cff;
+  background-color: var(--accentColor);
   animation: ball25 7s infinite;
   transform: translateY(10px);
   animation-timing-function: cubic-bezier(0.3, 1.18, 0.63, 1.28);
@@ -283,7 +297,7 @@
   left: 0;
   width: 100%;
   transform: translateY(-50%);
-  color: var(--backgroundColor);
+  color: var(--ink);
   font-size: 60px;
   font-weight: 600;
   text-transform: uppercase;
@@ -296,7 +310,7 @@
   content: "";
   width: 20px;
   height: 20px;
-  background-color: var(--backgroundColor);
+  background-color: var(--accentColor);
   position: absolute;
   top: 50%;
   border-radius: 50px;

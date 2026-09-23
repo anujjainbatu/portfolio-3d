@@ -12,6 +12,7 @@ import WhatIDo from "./WhatIDo";
 import Work from "./Work";
 import TechStackNew from "./TechStackNew";
 import setSplitText from "./utils/splitText";
+import "./styles/Starfield.css";
 
 const MainContainer = ({ children }: PropsWithChildren) => {
   const [isDesktopView, setIsDesktopView] = useState<boolean>(
@@ -62,6 +63,13 @@ const MainContainer = ({ children }: PropsWithChildren) => {
 
   return (
     <div className="container-main">
+      {/* Decorative deep-space backdrop. Fixed and behind everything via
+          z-index: -1, so it needs no place in the section flow. */}
+      <div className="starfield" aria-hidden="true">
+        <div className="starfield-layer starfield-far" />
+        <div className="starfield-layer starfield-mid" />
+        <div className="starfield-layer starfield-near" />
+      </div>
       <Cursor />
       <Navbar />
       <SocialIcons />

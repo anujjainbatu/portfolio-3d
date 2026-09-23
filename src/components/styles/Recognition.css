@@ -22,11 +22,11 @@
   gap: 50px;
   align-items: baseline;
   padding: 26px 0;
-  border-top: 1px solid #363636;
+  border-top: 1px solid var(--line);
 }
 
 .recognition-row:last-child {
-  border-bottom: 1px solid #363636;
+  border-bottom: 1px solid var(--line);
 }
 
 .recognition-year {
@@ -46,7 +46,7 @@
 .recognition-body p {
   font-size: 16px;
   font-weight: 200;
-  color: #adacac;
+  color: var(--muted);
   margin: 0;
   max-width: 750px;
 }

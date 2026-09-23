@@ -62,7 +62,7 @@ const Scene = () => {
       // both sit at the origin, but visible the moment one of them moves.
       let cancelled = false;
 
-      const light = setLighting(scene);
+      const light = setLighting(scene, renderer);
       const progress = setProgress((value) => setLoading(value));
       const { loadCharacter } = setCharacter(renderer, scene, camera);
 
