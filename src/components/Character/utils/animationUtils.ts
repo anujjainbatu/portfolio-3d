@@ -53,6 +53,7 @@ const HANG_POSE: { bone: string; rot: Rot }[] = [
 const LAND = "Standing";
 /** Run-on-the-spot cycle for the Work platform. Carries no root motion. */
 const RUN = "Running";
+const CHAT_ANSWER = "Yes";
 
 /**
  * Scroll code (see GsapScroll.ts) needs to drive the pose from outside the
@@ -127,6 +128,14 @@ const setAnimations = (gltf: GLTF) => {
 
   function startIntro() {
     playOnce(actionFor(INTRO));
+  }
+
+  function reactToChat(reaction: "open" | "answer") {
+    const reducedMotion = window.matchMedia?.(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    if (reducedMotion || window.scrollY >= 200) return;
+    playOnce(actionFor(reaction === "open" ? INTRO : CHAT_ANSWER));
   }
 
   /**
@@ -289,7 +298,7 @@ const setAnimations = (gltf: GLTF) => {
 
   characterControls = { setHangWeight, setRun, land, resumeIdle };
 
-  return { mixer, startIntro, hover, tick };
+  return { mixer, startIntro, hover, tick, reactToChat };
 };
 
 export default setAnimations;

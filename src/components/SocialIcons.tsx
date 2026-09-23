@@ -1,9 +1,7 @@
 import { FaGithub, FaLinkedinIn } from "react-icons/fa6";
 import { MdMailOutline } from "react-icons/md";
 import "./styles/SocialIcons.css";
-import { TbMessage, TbNotes } from "react-icons/tb";
 import { useEffect } from "react";
-import HoverLinks from "./HoverLinks";
 import { config } from "../config";
 
 const SocialIcons = () => {
@@ -71,30 +69,6 @@ const SocialIcons = () => {
             <MdMailOutline />
           </a>
         </span>
-      </div>
-      <div className="bottom-links">
-        <a
-          className="bottom-link"
-          href={config.contact.whatsapp}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <HoverLinks text="LET'S TALK" />
-          <span>
-            <TbMessage />
-          </span>
-        </a>
-        <a
-          className="bottom-link"
-          href={config.contact.resume}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <HoverLinks text="RESUME" />
-          <span>
-            <TbNotes />
-          </span>
-        </a>
       </div>
     </div>
   );

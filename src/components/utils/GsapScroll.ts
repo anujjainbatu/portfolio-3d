@@ -2,6 +2,7 @@ import * as THREE from "three";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { characterControls } from "../Character/utils/animationUtils";
+import { lenis } from "../Navbar";
 
 /**
  * Where the gripping hands sit relative to the model origin (its feet), in
@@ -95,14 +96,33 @@ const RUN_FACE_Y = 1.15;
  */
 const DRIFT_END = 0.8;
 /**
- * Scroll px from losing the platform to being fully in the hole.
- *
- * Long because the hole is a moving target: it rises 1:1 with scroll once the
- * Work pin releases, so a short fall finished while the vortex was still a
- * thousand pixels below the fold and he vanished into nothing. This lands him
- * on it while it is comfortably in view.
+ * Where the page takes itself once the platform is gone: the tech section's top
+ * this far below the viewport top, which frames the heading and the pyramid.
+ * The fall is measured against this same point, so he lands in the hole exactly
+ * as the page arrives — scrolled there by hand or carried by the auto-scroll.
  */
-const FALL_SCROLL_PX = 1900;
+const FALL_DEST_TOP_PX = 0;
+/** Seconds the auto-scroll takes. The fall is scroll-driven, so this is also
+ *  how long the drop takes to play out. */
+const AUTOSCROLL_DURATION = 4.2;
+/**
+ * Lenis defaults to an exponential ease-out, which covers most of the distance
+ * in the first half second — the fall is scroll-driven, so that flashed the
+ * whole drop past before you could read it. This spreads the travel instead and
+ * lets the fall's own acceleration do the work.
+ */
+const AUTOSCROLL_EASE = (t: number) =>
+  t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+/**
+ * Scroll px past the lip before the page takes over.
+ *
+ * Small, because it has to win the race with the reader's own momentum: Lenis
+ * accelerates a flick to 400px a frame-ish, which covers the whole 1300px fall
+ * in two or three wheel ticks. Waiting even 40px meant they had usually already
+ * shot past the destination, the guard below suppressed the takeover, and the
+ * drop flashed by unseen.
+ */
+const AUTOSCROLL_TRIGGER_PX = 8;
 /**
  * The hole is the vortex in the tech section's background video, so its screen
  * position is derived from the video rather than guessed at as a fraction of
@@ -112,16 +132,33 @@ const FALL_SCROLL_PX = 1900;
  */
 const HOLE_VIDEO_W = 2560;
 const HOLE_VIDEO_H = 1192;
-const HOLE_U = 0.509;
-const HOLE_V = 0.635;
 /**
- * He reaches the hole at this point in the fall, and spends the rest of it
- * sinking in place. Arriving and vanishing at the same instant meant you never
- * actually saw him get there.
+ * The throat of the funnel, not the ball hovering in it — measured off the
+ * video by profiling the funnel's width per row. It narrows from 526px wide at
+ * v=0.705 to 70px at v=0.747 and is gone by v=0.755, with its centre steady at
+ * u=0.501. The ball sits far higher, centred at v=0.439, which is what an
+ * earlier brightest-pixel reading picked up by mistake.
  */
-const FALL_ARRIVES = 0.8;
-/** Fraction of the fall after which he starts shrinking into the hole. */
-const SINK_FROM = 0.82;
+const HOLE_U = 0.501;
+const HOLE_V = 0.745;
+/**
+ * He reaches the pit only at the very end of the fall.
+ *
+ * The pit is 790px down the tech section, so for most of the descent it is
+ * still below the fold and rising. Arriving early meant arriving at an
+ * off-screen position and then shrinking out of sight down there; staying with
+ * it until the end keeps him on screen all the way in.
+ */
+const FALL_ARRIVES = 0.95;
+/**
+ * Fraction of the fall after which he starts shrinking into the pit — after he
+ * has essentially reached it, not before. Shrinking from 0.8 had him fading out
+ * some 150px short, because the descent itself only closes the last of the gap
+ * right at the end.
+ */
+const SINK_FROM = 0.9;
+/** How far below the pit's mouth he carries on descending, in screen px. */
+const SINK_DEPTH_PX = 55;
 
 const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
 /** Smoothstep: eases both ends so the hand-off has no velocity discontinuity. */
@@ -172,6 +209,10 @@ function setRopeDescent(
   let lastShift: number | null = null;
   /** Smoothed so small scroll jitters do not flicker the run on and off. */
   let runWeight = 0;
+  /** So the page only takes over once per departure from the platform. */
+  let autoScrolled = false;
+  /** The canvas offset tl3 leaves behind, put back when he is not falling. */
+  let restCanvasY: number | null = null;
 
   const section = document.querySelector<HTMLElement>(".career-section");
   const workSection = document.querySelector<HTMLElement>(".work-section");
@@ -338,17 +379,70 @@ function setRopeDescent(
       // draws level with him.
       const tipAtRest = flexRect.left + lineW + beltTravel;
       const lipPassScroll = workTrigger.start + (tipAtRest - charScreenX);
-      fall = clamp01((window.scrollY - lipPassScroll) / FALL_SCROLL_PX);
+
+      // The fall spans from losing the platform to the page being parked on the
+      // tech section. Measuring it against that destination rather than a fixed
+      // number of pixels means he is fully in the hole exactly when the page
+      // gets there, however the scrolling happened.
+      const destScroll =
+        techSection.getBoundingClientRect().top +
+        window.scrollY -
+        FALL_DEST_TOP_PX;
+      const span = Math.max(1, destScroll - lipPassScroll);
+      fall = clamp01((window.scrollY - lipPassScroll) / span);
+
+      // Once the ground is gone the page carries itself to the tech section, so
+      // the fall finishes whether or not anyone keeps scrolling. Lenis lets the
+      // user take back over mid-flight; the fall stays scroll-driven either way.
+      const pastLip = window.scrollY - lipPassScroll;
+      // Never drag anyone backwards: someone who flicks straight past the
+      // destination has already seen it, and yanking them back up would be
+      // worse than not helping at all.
+      if (
+        pastLip > AUTOSCROLL_TRIGGER_PX &&
+        window.scrollY < destScroll &&
+        !autoScrolled
+      ) {
+        autoScrolled = true;
+        lenis?.scrollTo(destScroll, {
+          duration: AUTOSCROLL_DURATION,
+          easing: AUTOSCROLL_EASE,
+          // Hold the scroll for the duration. Without this the reader's own
+          // momentum cancels the takeover immediately and the fall is over
+          // before it is visible — "whether they scroll or not" needs the page
+          // to actually keep the wheel for these few seconds.
+          lock: true,
+          force: true,
+        });
+      } else if (pastLip <= 0) {
+        // Back on the platform — re-arm for the next time through.
+        autoScrolled = false;
+      }
     }
 
     if (fall <= 0) {
       character.scale.setScalar(1);
+      if (restCanvasY !== null) {
+        // Hand the canvas offset back to tl3 on the way up.
+        gsap.set(".character-model", { y: restCanvasY });
+        restCanvasY = null;
+      }
       character.position.set(onPlatformX, onPlatformY, onPlatformZ);
       return;
     }
 
     // Nothing to run on any more.
     characterControls?.setRun(0, 0);
+
+    // tl3 parks the canvas 15% up the screen, so it covers only y -135..765 —
+    // and the pit is below that, which was clipping his body off at the canvas
+    // edge and leaving just a sliver of his head. Cover the viewport while he
+    // falls. This does not move him: the projection above reads the canvas's
+    // live rect, so shifting the canvas is compensated in the same frame.
+    if (restCanvasY === null) {
+      restCanvasY = (gsap.getProperty(".character-model", "y") as number) || 0;
+    }
+    gsap.set(".character-model", { y: 0 });
 
     // Where the video actually sits after object-fit: cover crops it.
     const techRect = techSection!.getBoundingClientRect();
@@ -365,6 +459,7 @@ function setRopeDescent(
     const hfy = (holeScreenY - canvasTop) / canvas.height;
     const holeX = camera.position.x + (hfx - 0.5) * visibleW;
     const holeY = camera.position.y + (0.5 - hfy) * visibleH;
+    const sinkDepth = (SINK_DEPTH_PX / canvas.height) * visibleH;
 
     // Squared, not smoothed: a fall should accelerate. It completes early so he
     // arrives at the hole and then sinks, rather than doing both at once.
@@ -378,9 +473,16 @@ function setRopeDescent(
 
     // The canvas draws above the page, so he cannot pass behind the icons —
     // shrinking is what reads as being swallowed rather than landing on top.
+    // Sinking, not just vanishing: he keeps descending past the pit's mouth as
+    // he shrinks, the way something goes down a drain. Shrinking alone to
+    // nothing read as evaporating in mid-air, and shrinking to 5% put him below
+    // a pixel or two long before the fade had finished.
     const sink = clamp01((fall - SINK_FROM) / (1 - SINK_FROM));
-    character.scale.setScalar(lerp(1, 0.08, sink));
-    gsap.set(".character-model", { opacity: 1 - sink });
+    character.position.y -= sink * sinkDepth;
+    character.scale.setScalar(lerp(1, 0.22, sink));
+    gsap.set(".character-model", {
+      opacity: 1 - clamp01((sink - 0.6) / 0.4),
+    });
   };
 
   const engage = () => {
@@ -405,6 +507,7 @@ function setRopeDescent(
       character.position.set(0, 0, 0);
       character.scale.setScalar(1);
       if (restYaw !== null) character.rotation.y = restYaw;
+      autoScrolled = false;
       runWeight = 0;
       lastShift = null;
       characterControls?.setRun(0, 0);

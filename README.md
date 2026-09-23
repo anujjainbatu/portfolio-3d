@@ -2,60 +2,78 @@
 
 Personal site for **Anuj Jain**, AI Solutions Engineer (Hyderabad, India).
 React + TypeScript + Vite, with a Three.js hero, GSAP scroll animation, and a
-serverless chat endpoint on Vercel.
+serverless portfolio assistant on Vercel.
 
-- `/` — the site: about, what I do, career, recognition, systems in production, stack, contact
-- `/myworks` — every system, with its architecture
-- `/play` — chess against Stockfish, plus a chat that answers questions about the work
+- `/` — about, work, career, stack, and contact
+- `/myworks` — every production system, with its architecture
+- `/play` — chess against the open-source Stockfish engine
+- Floating **LET'S TALK** assistant — available on every route
 
 ## Content
 
-**All copy lives in [`src/config.ts`](src/config.ts).** Components read from it;
-none of them hardcode text. Change a fact there and it changes everywhere.
+Public site and assistant facts live in
+[`shared/publicProfile.ts`](shared/publicProfile.ts). Components continue to
+import `src/config.ts`, which re-exports that canonical profile. Only facts that
+are safe to publish belong there: no client identities, salary, phone number,
+employer stability, job-search details, or future claims.
 
-That file is written under a set of rules, documented in its header and worth
-repeating: real work only, no client names, no salary, no phone number, no
-mention of job searching, dates as years only. Anything aspirational stays out.
+The server-only assistant rules live in `server/chatPolicy.ts`. The browser
+never sends or controls the system prompt.
 
 ## Running it
 
 ```bash
 npm install
 npm run dev        # http://localhost:5173
-npm run build      # tsc -b && vite build → dist/
-npm run preview
+npm run build      # type-check + Vite production build
+npm run lint
+npm run test:run
 ```
 
-## The chat on /play
+`npm run dev` mounts the same server-owned chat handler at `/api/chat`, so the
+assistant works on Vite's selected local port. Production continues to use the
+Vercel function in `api/chat.ts`; secrets are never injected into client code.
 
-`api/chat.js` is a Vercel serverless function that proxies to Groq, so the API
-key is never exposed to the browser.
+## Portfolio assistant
+
+`api/chat.ts` accepts a maximum of 12 user/assistant messages, validates and
+caps all text, applies a per-IP Upstash sliding-window limit, attaches the
+server-owned profile and policy, and proxies the approved request to Groq. The
+API returns the application-owned shape `{ "message": "..." }`; provider
+responses are never exposed directly.
+
+Conversation history is capped and stored only in the visitor's
+`sessionStorage`. It survives navigation and refreshes in that tab, can be
+cleared in the widget, and is never written to a transcript database. Analytics
+record event names only, never questions or answers.
+
+Required deployment variables:
 
 ```bash
-GROQ_API_KEY=...   # required, set in Vercel project settings
+GROQ_API_KEY=...
+GROQ_MODEL=openai/gpt-oss-20b       # optional override
+UPSTASH_REDIS_REST_URL=...
+UPSTASH_REDIS_REST_TOKEN=...
 ```
 
-Without it the endpoint returns a 500 and the UI shows a "chat is offline"
-state rather than failing silently. Everything else on the site works without
-the key.
-
-The bot's persona and its hard limits live in `SYSTEM_PROMPT` in
-[`src/pages/Play.tsx`](src/pages/Play.tsx) — it is instructed never to name
-clients, discuss compensation, or invent facts that are not in the prompt.
+The application intentionally returns an offline state when Groq or the
+managed limiter is not configured. Portfolio browsing and chess remain fully
+functional. Also configure a provider-side usage/budget limit in the Groq
+project.
 
 ## Deploying
 
-Vercel. `vercel.json` handles SPA rewrites and passes `/api/*` through to the
-function. Set `GROQ_API_KEY` before the first deploy.
-
-Once the domain is live, fill in the canonical and `og:url` tags in
-`index.html` (marked with a TODO).
+Deploy to Vercel. `vercel.json` passes `/api/*` to serverless functions and
+rewrites the remaining paths to the SPA. Add the four environment variables
+above before enabling the assistant publicly.
 
 ## Credits
 
 Third-party notices are in [`LICENSES.md`](LICENSES.md).
 
 - **Chess engine**: [stockfish.js](https://github.com/niklasf/stockfish.js) by
-  Niklas Fiekas, **GPLv3**, shipped unmodified. Not my work.
-- **3D model**: RobotExpressive, from the three.js examples — by Tomás Laulhé,
-  modified by Don McCurdy. CC0.
+  Niklas Fiekas, GPLv3, shipped unmodified.
+- **3D model**: RobotExpressive from the three.js examples, by Tomás Laulhé and
+  modified by Don McCurdy, CC0.
+- **Chat avatar**: generated for this project from the visual direction of the
+  CC0 robot mascot; stored at `public/robot-chat-avatar.png`.

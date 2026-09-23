@@ -41,3 +41,9 @@ URL above.
 - [react-icons](https://react-icons.github.io/react-icons/) — MIT
 
 Icons are loaded from jsDelivr at runtime and are not redistributed here.
+
+## Chat avatar — `public/robot-chat-avatar.png`
+
+The static chat avatar was generated for this project from the visual
+direction of the CC0 RobotExpressive mascot above. It is included to avoid
+loading a second Three.js scene inside the assistant.

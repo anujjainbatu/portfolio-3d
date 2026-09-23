@@ -20,11 +20,12 @@ const Scene = () => {
   const sceneRef = useRef(new THREE.Scene());
   const { setLoading } = useLoading();
 
-  const [character, setChar] = useState<THREE.Object3D | null>(null);
+  const [, setChar] = useState<THREE.Object3D | null>(null);
   useEffect(() => {
     if (canvasDiv.current) {
-      let rect = canvasDiv.current.getBoundingClientRect();
-      let container = { width: rect.width, height: rect.height };
+      const canvasElement = canvasDiv.current;
+      const rect = canvasElement.getBoundingClientRect();
+      const container = { width: rect.width, height: rect.height };
       const aspect = container.width / container.height;
       const scene = sceneRef.current;
 
@@ -37,7 +38,7 @@ const Scene = () => {
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
       renderer.toneMappingExposure = 1;
-      canvasDiv.current.appendChild(renderer.domElement);
+      canvasElement.appendChild(renderer.domElement);
 
       // The robot is 4.6 units tall with its feet on the origin. This fov and
       // zoom show ~0.231 units of height per unit of distance, so z=25 frames
@@ -50,6 +51,8 @@ const Scene = () => {
       let headBone: THREE.Object3D | null = null;
       let mixer: THREE.AnimationMixer;
       let poseTick: (() => void) | null = null;
+      let removeHoverListener: (() => void) | undefined;
+      let removeChatReactionListener: (() => void) | undefined;
 
       const clock = new THREE.Clock();
 
@@ -60,28 +63,30 @@ const Scene = () => {
       let cancelled = false;
 
       const light = setLighting(scene);
-      let progress = setProgress((value) => setLoading(value));
+      const progress = setProgress((value) => setLoading(value));
       const { loadCharacter } = setCharacter(renderer, scene, camera);
 
       loadCharacter().then((gltf) => {
         if (gltf && !cancelled) {
           const animations = setAnimations(gltf);
-          hoverDivRef.current && animations.hover(gltf, hoverDivRef.current);
+          if (hoverDivRef.current) {
+            removeHoverListener = animations.hover(gltf, hoverDivRef.current);
+          }
           mixer = animations.mixer;
           poseTick = animations.tick;
-          let character = gltf.scene;
-          setChar(character);
-          scene.add(character);
+          const loadedCharacter = gltf.scene;
+          setChar(loadedCharacter);
+          scene.add(loadedCharacter);
           // The rig has a bone named "Head" and a skinned mesh, also named
           // "Head", parented to it. getObjectByName returns the bone today
           // only because the mesh sits below it in the tree — ask for the
           // bone explicitly so a re-export cannot silently flip this.
-          character.traverse((obj: THREE.Object3D) => {
+          loadedCharacter.traverse((obj: THREE.Object3D) => {
             if (!headBone && (obj as THREE.Bone).isBone && obj.name === "Head") {
               headBone = obj;
             }
           });
-          setCharTimeline(character, camera);
+          setCharTimeline(loadedCharacter, camera);
           setAllTimeline();
           progress.loaded().then(() => {
             setTimeout(() => {
@@ -89,9 +94,22 @@ const Scene = () => {
               animations.startIntro();
             }, 2500);
           });
-          window.addEventListener("resize", () =>
-            handleResize(renderer, camera, canvasDiv, character)
-          );
+          const onResize = () =>
+            handleResize(renderer, camera, canvasDiv, loadedCharacter);
+          window.addEventListener("resize", onResize);
+
+          const onChatReaction = (event: Event) => {
+            const reaction = (event as CustomEvent<{ reaction?: string }>).detail
+              ?.reaction;
+            if (reaction === "open" || reaction === "answer") {
+              animations.reactToChat(reaction);
+            }
+          };
+          window.addEventListener("portfolio:chat-reaction", onChatReaction);
+          removeChatReactionListener = () => {
+            window.removeEventListener("resize", onResize);
+            window.removeEventListener("portfolio:chat-reaction", onChatReaction);
+          };
         }
       });
 
@@ -101,7 +119,7 @@ const Scene = () => {
       const onMouseMove = (event: MouseEvent) => {
         handleMouseMove(event, (x, y) => (mouse = { x, y }));
       };
-      let debounce: number | undefined;
+      let debounce: ReturnType<typeof setTimeout> | undefined;
       const onTouchStart = (event: TouchEvent) => {
         const element = event.target as HTMLElement;
         debounce = setTimeout(() => {
@@ -118,9 +136,7 @@ const Scene = () => {
         });
       };
 
-      document.addEventListener("mousemove", (event) => {
-        onMouseMove(event);
-      });
+      document.addEventListener("mousemove", onMouseMove);
       const landingDiv = document.getElementById("landingDiv");
       if (landingDiv) {
         landingDiv.addEventListener("touchstart", onTouchStart);
@@ -150,22 +166,21 @@ const Scene = () => {
       return () => {
         cancelled = true;
         clearTimeout(debounce);
+        removeHoverListener?.();
+        removeChatReactionListener?.();
         scene.clear();
         renderer.dispose();
-        window.removeEventListener("resize", () =>
-          handleResize(renderer, camera, canvasDiv, character!)
-        );
-        if (canvasDiv.current) {
-          canvasDiv.current.removeChild(renderer.domElement);
+        if (canvasElement.contains(renderer.domElement)) {
+          canvasElement.removeChild(renderer.domElement);
         }
+        document.removeEventListener("mousemove", onMouseMove);
         if (landingDiv) {
-          document.removeEventListener("mousemove", onMouseMove);
           landingDiv.removeEventListener("touchstart", onTouchStart);
           landingDiv.removeEventListener("touchend", onTouchEnd);
         }
       };
     }
-  }, []);
+  }, [setLoading]);
 
   return (
     <>
