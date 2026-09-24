@@ -6,7 +6,6 @@ serverless portfolio assistant on Vercel.
 
 - `/` — about, work, career, stack, and contact
 - `/myworks` — every production system, with its architecture
-- `/play` — chess against the open-source Stockfish engine
 - Floating **LET'S TALK** assistant — available on every route
 
 ## Content
@@ -57,7 +56,7 @@ UPSTASH_REDIS_REST_TOKEN=...
 ```
 
 The application intentionally returns an offline state when Groq or the
-managed limiter is not configured. Portfolio browsing and chess remain fully
+managed limiter is not configured. The rest of the site remains fully
 functional. Also configure a provider-side usage/budget limit in the Groq
 project.
 
@@ -71,8 +70,6 @@ above before enabling the assistant publicly.
 
 Third-party notices are in [`LICENSES.md`](LICENSES.md).
 
-- **Chess engine**: [stockfish.js](https://github.com/niklasf/stockfish.js) by
-  Niklas Fiekas, GPLv3, shipped unmodified.
 - **3D model**: RobotExpressive from the three.js examples, by Tomás Laulhé and
   modified by Don McCurdy, CC0.
 - **Chat avatar**: generated for this project from the visual direction of the

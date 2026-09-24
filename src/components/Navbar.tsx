@@ -11,8 +11,17 @@ export let lenis: Lenis | null = null;
 
 const Navbar = () => {
   useEffect(() => {
+    // Touch/tablet layouts use the browser's native scrolling. Creating Lenis
+    // and immediately stopping it writes `overflow: clip` to the root element,
+    // which can leave the page locked if the delayed intro effect has not run
+    // yet (or if the viewport never mounts the desktop character/loader flow).
+    if (window.innerWidth <= 1024) {
+      lenis = null;
+      return;
+    }
+
     // Initialize Lenis smooth scroll
-    lenis = new Lenis({
+    const scroll = new Lenis({
       duration: 1.7,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       orientation: "vertical",
@@ -22,16 +31,17 @@ const Navbar = () => {
       touchMultiplier: 2,
       infinite: false,
     });
+    lenis = scroll;
 
     // Start paused
-    lenis.stop();
+    scroll.stop();
 
     // Handle smooth scroll animation frame
     function raf(time: number) {
-      lenis?.raf(time);
-      requestAnimationFrame(raf);
+      scroll.raf(time);
+      rafId = requestAnimationFrame(raf);
     }
-    requestAnimationFrame(raf);
+    let rafId = requestAnimationFrame(raf);
 
     // Handle navigation links
     const links = document.querySelectorAll(".header ul a");
@@ -56,12 +66,14 @@ const Navbar = () => {
     });
 
     // Handle resize
-    window.addEventListener("resize", () => {
-      lenis?.resize();
-    });
+    const handleResize = () => scroll.resize();
+    window.addEventListener("resize", handleResize);
 
     return () => {
-      lenis?.destroy();
+      cancelAnimationFrame(rafId);
+      window.removeEventListener("resize", handleResize);
+      scroll.destroy();
+      if (lenis === scroll) lenis = null;
     };
   }, []);
   return (

@@ -77,19 +77,23 @@ body {
   overflow: hidden;
 }
 
-/* Allow scrolling on mobile */
-@media only screen and (max-width: 768px) {
+/* Touch/tablet layouts do not use Lenis; keep native page scrolling enabled
+   across the same range in which the desktop 3D scene is not mounted. */
+@media only screen and (max-width: 1024px) {
   body {
-    overflow: auto !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
     height: auto !important;
-    min-height: 100vh !important;
-    touch-action: manipulation;
+    min-height: 100svh !important;
+    touch-action: pan-y pinch-zoom;
   }
 
   html {
     overflow-x: hidden !important;
     overflow-y: auto !important;
-    touch-action: manipulation;
+    height: auto;
+    min-height: 100%;
+    touch-action: pan-y pinch-zoom;
   }
 
   /* Ensure no fixed elements block scrolling */

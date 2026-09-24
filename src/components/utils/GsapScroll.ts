@@ -159,6 +159,16 @@ const FALL_ARRIVES = 0.95;
 const SINK_FROM = 0.9;
 /** How far below the pit's mouth he carries on descending, in screen px. */
 const SINK_DEPTH_PX = 55;
+/** Fraction of the fall over which he eases out of standing and into the tip. */
+const FALL_POSE_BLEND = 0.12;
+/**
+ * Yaw while falling. The fall clip tips him about his own X axis, and he spends
+ * the descent facing the camera — so left as is he would tip AWAY from the
+ * viewer, foreshortened, reading as shrinking rather than going over. Turning
+ * him side-on lines that axis up with the camera's Z so the tip swings across
+ * the screen. The sign is what puts his back to the ground rather than the sky.
+ */
+const FALL_FACE_Y = -Math.PI / 2;
 
 const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
 /** Smoothstep: eases both ends so the hand-off has no velocity discontinuity. */
@@ -421,6 +431,7 @@ function setRopeDescent(
     }
 
     if (fall <= 0) {
+      characterControls?.setFall(0, 0);
       character.scale.setScalar(1);
       if (restCanvasY !== null) {
         // Hand the canvas offset back to tl3 on the way up.
@@ -431,8 +442,12 @@ function setRopeDescent(
       return;
     }
 
-    // Nothing to run on any more.
+    // Nothing to run on any more — he tips over backwards instead.
+    const poseIn = clamp01(fall / FALL_POSE_BLEND);
     characterControls?.setRun(0, 0);
+    characterControls?.setFall(poseIn, fall);
+    // Turn side-on as he goes over, so the tip reads across the screen.
+    character.rotation.y = lerp(ROPE_FACE_Y, FALL_FACE_Y, ease(poseIn));
 
     // tl3 parks the canvas 15% up the screen, so it covers only y -135..765 —
     // and the pit is below that, which was clipping his body off at the canvas
@@ -507,6 +522,7 @@ function setRopeDescent(
       character.position.set(0, 0, 0);
       character.scale.setScalar(1);
       if (restYaw !== null) character.rotation.y = restYaw;
+      characterControls?.setFall(0, 0);
       autoScrolled = false;
       runWeight = 0;
       lastShift = null;

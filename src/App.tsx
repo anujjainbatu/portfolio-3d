@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Navigate, Routes, Route } from "react-router-dom";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import "./App.css";
@@ -9,7 +9,6 @@ import ChatWidget from "./chat/ChatWidget";
 const CharacterModel = lazy(() => import("./components/Character"));
 const MainContainer = lazy(() => import("./components/MainContainer"));
 const MyWorks = lazy(() => import("./pages/MyWorks"));
-const Play = lazy(() => import("./pages/Play"));
 import { LoadingProvider } from "./context/LoadingProvider";
 
 const App = () => {
@@ -39,14 +38,9 @@ const App = () => {
               </Suspense>
             }
           />
-          <Route
-            path="/play"
-            element={
-              <Suspense fallback={<div>Loading...</div>}>
-                <Play />
-              </Suspense>
-            }
-          />
+          {/* Unknown paths, including retired routes, land on the home page
+              rather than an empty router outlet. */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         <ChatWidget />
       </ChatProvider>

@@ -17,7 +17,6 @@ import {
 import { TbMessage, TbNotes } from "react-icons/tb";
 import { config } from "../config";
 import HoverLinks from "../components/HoverLinks";
-import RobotAvatar from "./RobotAvatar";
 import { useChat } from "./ChatContext";
 import { renderMarkdown, stripMarkdown } from "./renderMarkdown";
 import "./ChatWidget.css";
@@ -291,21 +290,20 @@ const ChatWidget = () => {
             }`}
             role="dialog"
             aria-modal="true"
+            data-lenis-prevent
             aria-label="Anuj’s AI assistant"
             aria-describedby="portfolio-chat-disclosure"
           >
             <header className="portfolio-chat__header">
-              <RobotAvatar />
               <div className="portfolio-chat__identity">
-                <p className="portfolio-chat__eyebrow">AI profile assistant</p>
-                <h2 id="portfolio-chat-title">
-                  Anuj AI
-                  <span className="portfolio-chat__status">
-                    <span className="portfolio-chat__status-dot" aria-hidden="true" />
-                    Online
-                  </span>
+                <h2>
+                  AI Assistant
+                  <span
+                    className="portfolio-chat__status-dot"
+                    title="Online"
+                    aria-hidden="true"
+                  />
                 </h2>
-                <p className="portfolio-chat__role">Personal AI Assistant</p>
               </div>
               <button
                 type="button"

@@ -26,7 +26,6 @@ dist-ssr
 
 backup/
 .env
-redoxchess-engine/
 # TypeScript incremental build info
 *.tsbuildinfo
 .firecrawl/

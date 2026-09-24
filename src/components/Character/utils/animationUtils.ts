@@ -53,6 +53,14 @@ const HANG_POSE: { bone: string; rot: Rot }[] = [
 const LAND = "Standing";
 /** Run-on-the-spot cycle for the Work platform. Carries no root motion. */
 const RUN = "Running";
+/**
+ * The backwards fall. Despite the name this clip is simply a body tipping over:
+ * its Body rotation runs 0 to -95.6 degrees about X across the first 0.38s and
+ * then holds, with the head, forearms and both legs trailing. It carries no
+ * root drift (Body translation spans about 0.01 units), so the scroll-driven
+ * positioning stays in charge of where he actually goes.
+ */
+const FALL = "Death";
 const CHAT_ANSWER = "Yes";
 
 /**
@@ -63,6 +71,7 @@ const CHAT_ANSWER = "Yes";
 export let characterControls: {
   setHangWeight: (w: number) => void;
   setRun: (weight: number, phase: number) => void;
+  setFall: (weight: number, phase: number) => void;
   land: () => void;
   resumeIdle: () => void;
 } | null = null;
@@ -221,6 +230,17 @@ const setAnimations = (gltf: GLTF) => {
     runAction.paused = true;
     runAction.setEffectiveWeight(0);
   }
+  /**
+   * Run and fall both borrow from Idle, and both share the legs, head and body,
+   * so neither can own Idle's weight alone — whichever ran second would undo
+   * the other. They each report their weight here instead.
+   */
+  const blend = { run: 0, fall: 0 };
+  function balanceIdle() {
+    const taken = Math.min(1, blend.run + blend.fall);
+    idleAction?.setEffectiveWeight(1 - taken);
+  }
+
   function setRun(weight: number, phase: number) {
     if (!runAction) return;
     const w = Math.min(1, Math.max(0, weight));
@@ -229,12 +249,39 @@ const setAnimations = (gltf: GLTF) => {
     if (t < 0) t += duration;
     runAction.time = t;
     runAction.setEffectiveWeight(w);
-    idleAction?.setEffectiveWeight(1 - w);
+    blend.run = w;
+    balanceIdle();
+  }
+
+  /**
+   * Tip over backwards, driven by scroll like everything else in this sequence.
+   *
+   * `phase` is CLAMPED rather than wrapped, unlike the run: this is a one-shot,
+   * and wrapping it would snap him upright again the instant the fall completed.
+   */
+  const fallAction = actionFor(FALL);
+  if (fallAction) {
+    fallAction.play();
+    fallAction.paused = true;
+    fallAction.setEffectiveWeight(0);
+  }
+  function setFall(weight: number, phase: number) {
+    if (!fallAction) return;
+    const w = Math.min(1, Math.max(0, weight));
+    const duration = fallAction.getClip().duration;
+    fallAction.time = Math.min(1, Math.max(0, phase)) * duration;
+    fallAction.setEffectiveWeight(w);
+    blend.fall = w;
+    balanceIdle();
   }
 
   function resumeIdle() {
     gsap.killTweensOf(hang);
     hang.weight = 0;
+    blend.run = 0;
+    blend.fall = 0;
+    runAction?.setEffectiveWeight(0);
+    fallAction?.setEffectiveWeight(0);
     idleAction?.reset().setEffectiveWeight(1).play();
   }
 
@@ -296,7 +343,7 @@ const setAnimations = (gltf: GLTF) => {
     };
   }
 
-  characterControls = { setHangWeight, setRun, land, resumeIdle };
+  characterControls = { setHangWeight, setRun, setFall, land, resumeIdle };
 
   return { mixer, startIntro, hover, tick, reactToChat };
 };

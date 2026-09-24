@@ -17,9 +17,10 @@ export const LoadingContext = createContext<LoadingType | null>(null);
 
 export const LoadingProvider = ({ children }: PropsWithChildren) => {
   const [isLoading, setIsLoading] = useState(() => {
-    // Skip loading on mobile
-    if (window.innerWidth <= 768) return false;
-    return true;
+    // The 3D character is only mounted above 1024px, and it is what completes
+    // the loader. Never show a loader on a viewport where that completion path
+    // does not exist.
+    return window.innerWidth > 1024;
   });
   const [loading, setLoading] = useState(0);
 
@@ -29,8 +30,8 @@ export const LoadingProvider = ({ children }: PropsWithChildren) => {
     setLoading,
   };
   useEffect(() => {
-    // Auto-start animations on mobile since there's no 3D model
-    if (window.innerWidth <= 768) {
+    // Auto-start the page wherever there is no 3D model to finish the loader.
+    if (window.innerWidth <= 1024) {
       import("../components/utils/initialFX").then((module) => {
         if (module.initialFX) {
           setTimeout(() => {

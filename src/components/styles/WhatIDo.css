@@ -255,6 +255,15 @@
   border-radius: 4px;
 }
 
+/* Let a swipe continue onto the page when a touch user reaches the top or
+   bottom of a card. `contain` is useful with desktop Lenis, but on mobile it
+   makes these large cards feel like a page-level scroll lock. */
+@media only screen and (max-width: 1024px) {
+  .what-content-in {
+    overscroll-behavior-y: auto;
+  }
+}
+
 .what-content-in h5 {
   font-weight: 300;
   opacity: 0.5;

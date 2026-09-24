@@ -16,24 +16,6 @@ examples.
   by this repository's convention, and because the creator takes support on
   Patreon.
 
-## Chess engine — `public/stockfish.js`
-
-The chess opponent on `/play` is **Stockfish**, compiled to JavaScript by
-Niklas Fiekas. It is **not** original work and is not presented as such
-anywhere on the site.
-
-- Stockfish copyright T. Romstad, M. Costalba, J. Kiiski, G. Linscott and other
-  contributors. Multi-variant support by Daniel Dugovic and contributors.
-- Compiled to JavaScript by Niklas Fiekas <niklas.fiekas@backscattering.de>.
-- Source: https://github.com/niklasf/stockfish.js
-- **License: GNU General Public License v3.**
-
-`public/stockfish.js` is shipped **unmodified**, with its license header
-intact. It is loaded as a standalone Web Worker and is not linked into the
-application bundle. The full GPLv3 text is available at
-https://www.gnu.org/licenses/gpl-3.0.html and the corresponding source at the
-URL above.
-
 ## Icons
 
 - [devicon](https://devicon.dev) — MIT

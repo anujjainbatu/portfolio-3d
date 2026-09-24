@@ -7,8 +7,7 @@ interface Props {
 }
 
 /**
- * "AJ" mark. Stands in wherever the layout wants a portrait —
- * the mobile hero and the chess opponent avatar.
+ * "AJ" mark. Stands in wherever the layout wants a portrait.
  */
 const Monogram = ({ size = 120, className = "" }: Props) => (
   <div
