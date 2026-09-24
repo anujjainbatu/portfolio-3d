@@ -1,3 +1,15 @@
-import { createChatHandler } from "../server/chatHandler";
+import {
+  createChatHandler,
+  type ChatRequest,
+  type ChatResponse,
+} from "../server/chatHandler";
 
-export default createChatHandler();
+const chatHandler = createChatHandler();
+
+// Keep an explicit function export for Vercel's Node function loader.
+export default async function handler(
+  request: ChatRequest,
+  response: ChatResponse,
+) {
+  await chatHandler(request, response);
+}

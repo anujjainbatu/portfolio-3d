@@ -82,19 +82,18 @@ export function viteChatPlugin(mode = "development"): Plugin {
           }
         }
 
-        let statusCode = 200;
         const responseAdapter: ChatResponse = {
-          status(code) {
-            statusCode = code;
-            return responseAdapter;
+          get statusCode() {
+            return response.statusCode;
+          },
+          set statusCode(code) {
+            response.statusCode = code;
           },
           setHeader(name, value) {
             response.setHeader(name, value);
           },
-          json(value) {
-            response.statusCode = statusCode;
-            response.setHeader("Content-Type", "application/json; charset=utf-8");
-            response.end(JSON.stringify(value));
+          end(value) {
+            response.end(value);
           },
         };
 

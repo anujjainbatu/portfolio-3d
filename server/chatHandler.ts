@@ -25,9 +25,9 @@ export interface ChatRequest {
 }
 
 export interface ChatResponse {
-  status(code: number): ChatResponse;
-  json(body: unknown): void;
+  statusCode: number;
   setHeader(name: string, value: string | number): void;
+  end(body?: string): void;
 }
 
 interface HandlerDependencies {
@@ -64,12 +64,22 @@ const hasAllowedOrigin = (request: ChatRequest): boolean => {
   }
 };
 
+const sendJson = (
+  response: ChatResponse,
+  status: number,
+  body: unknown,
+) => {
+  response.statusCode = status;
+  response.setHeader("Content-Type", "application/json; charset=utf-8");
+  response.end(JSON.stringify(body));
+};
+
 const sendError = (
   response: ChatResponse,
   status: number,
   code: string,
   message: string,
-) => response.status(status).json({ error: { code, message } });
+) => sendJson(response, status, { error: { code, message } });
 
 export function createChatHandler(
   dependencies: HandlerDependencies = {
@@ -133,7 +143,7 @@ export function createChatHandler(
         validation.messages,
         buildSystemPrompt(),
       );
-      return response.status(200).json({ message });
+      return sendJson(response, 200, { message });
     } catch (error) {
       if (error instanceof ProviderConfigurationError) {
         return sendError(

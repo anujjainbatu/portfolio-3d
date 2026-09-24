@@ -8,21 +8,26 @@ import { RateLimitConfigurationError } from "../server/rateLimit";
 
 const createResponse = () => {
   const headers = new Map<string, string>();
-  let statusCode = 200;
   let body: unknown;
   const response: ChatResponse = {
-    status(code) {
-      statusCode = code;
-      return response;
-    },
-    json(value) {
-      body = value;
-    },
+    statusCode: 200,
     setHeader(name, value) {
       headers.set(name, String(value));
     },
+    end(value) {
+      body = value ? JSON.parse(value) : undefined;
+    },
   };
-  return { response, headers, get statusCode() { return statusCode; }, get body() { return body; } };
+  return {
+    response,
+    headers,
+    get statusCode() {
+      return response.statusCode;
+    },
+    get body() {
+      return body;
+    },
+  };
 };
 
 const request = (overrides: Partial<ChatRequest> = {}): ChatRequest => ({
