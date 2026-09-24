@@ -16,7 +16,7 @@ export async function requestGroqAnswer(
   messages: ChatTurn[],
   systemPrompt: string,
 ): Promise<string> {
-  const apiKey = process.env.GROQ_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY?.trim().replace(/^(["'])(.*)\1$/, "$2");
   if (!isConfiguredValue(apiKey)) {
     throw new ProviderConfigurationError("GROQ_API_KEY is not configured.");
   }

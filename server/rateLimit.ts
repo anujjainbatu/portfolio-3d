@@ -41,8 +41,17 @@ interface UpstashResponse {
 export class RateLimitConfigurationError extends Error {}
 
 const getConfiguration = () => {
-  const url = process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  // Vercel's Upstash integration injects KV_REST_API_* instead of UPSTASH_*,
+  // and values pasted from a .env file often keep their surrounding quotes.
+  const readEnv = (...names: string[]) => {
+    for (const name of names) {
+      const value = process.env[name]?.trim().replace(/^(["'])(.*)\1$/, "$2");
+      if (isConfiguredValue(value)) return value;
+    }
+    return undefined;
+  };
+  const url = readEnv("UPSTASH_REDIS_REST_URL", "KV_REST_API_URL");
+  const token = readEnv("UPSTASH_REDIS_REST_TOKEN", "KV_REST_API_TOKEN");
 
   if (!isConfiguredValue(url) || !isConfiguredValue(token)) {
     throw new RateLimitConfigurationError("Upstash rate limiting is not configured.");
