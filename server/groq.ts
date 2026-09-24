@@ -1,5 +1,5 @@
-import type { ChatTurn } from "./chatValidation";
-import { isConfiguredValue } from "./environment";
+import type { ChatTurn } from "./chatValidation.js";
+import { isConfiguredValue } from "./environment.js";
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const DEFAULT_MODEL = "openai/gpt-oss-20b";

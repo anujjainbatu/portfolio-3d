@@ -1,4 +1,4 @@
-import { chatProfile, config } from "../shared/publicProfile";
+import { chatProfile, config } from "../shared/publicProfile.js";
 
 const publicFacts = {
   identity: {

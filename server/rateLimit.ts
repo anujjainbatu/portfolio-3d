@@ -1,5 +1,5 @@
 import { createHmac, randomUUID } from "node:crypto";
-import { isConfiguredValue } from "./environment";
+import { isConfiguredValue } from "./environment.js";
 
 const RATE_LIMIT = 15;
 const WINDOW_MS = 10 * 60 * 1_000;

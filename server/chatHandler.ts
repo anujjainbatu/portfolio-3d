@@ -1,19 +1,19 @@
-import { buildSystemPrompt } from "./chatPolicy";
+import { buildSystemPrompt } from "./chatPolicy.js";
 import {
   CHAT_LIMITS,
   validateChatPayload,
   type ChatTurn,
-} from "./chatValidation";
+} from "./chatValidation.js";
 import {
   ProviderConfigurationError,
   ProviderResponseError,
   requestGroqAnswer,
-} from "./groq";
+} from "./groq.js";
 import {
   checkChatRateLimit,
   RateLimitConfigurationError,
   type RateLimitResult,
-} from "./rateLimit";
+} from "./rateLimit.js";
 
 type HeaderValue = string | string[] | undefined;
 

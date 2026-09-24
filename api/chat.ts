@@ -30,7 +30,7 @@ const runChatHandler = async (
 ) => {
   // Keeping the application import inside the guarded invocation means a
   // packaging/bootstrap error becomes useful JSON and a Vercel log entry.
-  const { createChatHandler } = await import("../server/chatHandler");
+  const { createChatHandler } = await import("../server/chatHandler.js");
   await createChatHandler()(request, response);
 };
 
