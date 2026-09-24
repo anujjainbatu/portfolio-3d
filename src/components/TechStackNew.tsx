@@ -31,7 +31,7 @@ const techStack: TechItem[][] = [
     { name: "n8n", icon: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/n8n.svg", url: "https://n8n.io" , mono: true },
     { name: "Zapier", icon: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/zapier.svg", url: "https://zapier.com" , mono: true },
     { name: "Shopify", icon: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/shopify.svg", url: "https://shopify.dev" , mono: true },
-    { name: "WhatsApp", icon: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/whatsapp.svg", url: "https://developers.facebook.com/docs/whatsapp" , mono: true },
+    { name: "WhatsApp / Email", icon: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/whatsapp.svg", url: "https://developers.facebook.com/docs/whatsapp" , mono: true },
     { name: "Meta Ads", icon: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/meta.svg", url: "https://developers.facebook.com/docs/marketing-apis" , mono: true },
     { name: "Google Ads", icon: "https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/googleads.svg", url: "https://developers.google.com/google-ads/api/docs/start" , mono: true },
     { name: "Postman", icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postman/postman-original.svg", url: "https://postman.com" },

@@ -1,9 +1,14 @@
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { config } from "../config";
 import FlowCard from "../components/FlowCard";
 import "./MyWorks.css";
 
 const MyWorks = () => {
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, []);
+
   return (
     <div className="myworks-page">
       <div className="myworks-header">
@@ -34,6 +39,12 @@ const MyWorks = () => {
                 <p className="myworks-card-category">{project.scale}</p>
                 <p className="myworks-card-description">{project.description}</p>
                 <p className="myworks-card-tech">{project.technologies}</p>
+                {project.link && (
+                  <p className="myworks-card-link">
+                    {isInternalLink ? "View project" : "Visit website"}
+                    <span aria-hidden="true"> ↗</span>
+                  </p>
+                )}
               </div>
             </>
           );
@@ -60,6 +71,7 @@ const MyWorks = () => {
                 href={project.link}
                 target="_blank"
                 rel="noopener noreferrer"
+                aria-label={`Visit ${project.title} website (opens in a new tab)`}
               >
                 {cardContent}
               </a>

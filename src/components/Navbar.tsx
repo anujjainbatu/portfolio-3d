@@ -5,6 +5,7 @@ import { gsap } from "gsap";
 import Lenis from "lenis";
 import "./styles/Navbar.css";
 import { config } from "../config";
+import { Link } from "react-router-dom";
 
 gsap.registerPlugin(ScrollTrigger);
 export let lenis: Lenis | null = null;
@@ -44,7 +45,7 @@ const Navbar = () => {
     let rafId = requestAnimationFrame(raf);
 
     // Handle navigation links
-    const links = document.querySelectorAll(".header ul a");
+    const links = document.querySelectorAll(".header ul a[data-href]");
     links.forEach((elem) => {
       const element = elem as HTMLAnchorElement;
       element.addEventListener("click", (e) => {
@@ -96,9 +97,9 @@ const Navbar = () => {
             </a>
           </li>
           <li>
-            <a data-href="#work" href="#work">
+            <Link to="/myworks">
               <HoverLinks text="WORK" />
-            </a>
+            </Link>
           </li>
           <li>
             <a data-href="#contact" href="#contact">

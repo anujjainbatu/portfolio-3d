@@ -10,10 +10,17 @@ const CharacterModel = lazy(() => import("./components/Character"));
 const MainContainer = lazy(() => import("./components/MainContainer"));
 const MyWorks = lazy(() => import("./pages/MyWorks"));
 import { LoadingProvider } from "./context/LoadingProvider";
+import { useRouteMeta } from "./utils/useRouteMeta";
+
+const RouteMeta = () => {
+  useRouteMeta();
+  return null;
+};
 
 const App = () => {
   return (
     <BrowserRouter>
+      <RouteMeta />
       <ChatProvider>
         <Routes>
           <Route

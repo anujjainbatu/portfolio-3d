@@ -81,3 +81,49 @@
     font-size: 18px;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Phone header: no wordmark, one row of links in a frosted bar. The bar
+   itself is .nav-fade, restyled from a gradient into a blurred strip.
+   --------------------------------------------------------------------------- */
+@media only screen and (max-width: 768px) {
+  .navbar-title {
+    display: none;
+  }
+
+  .header {
+    width: 100%;
+    padding: env(safe-area-inset-top) 8px 0;
+    justify-content: flex-end;
+  }
+
+  .header ul {
+    flex-direction: row;
+    align-items: center;
+    column-gap: 2px;
+    font-size: 12px;
+  }
+
+  .header ul li {
+    color: var(--ink);
+    letter-spacing: 1.4px;
+  }
+
+  .header ul a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 52px;
+    padding: 0 12px;
+  }
+
+  /* div. raises specificity over the base rule in Landing.css. Which of
+     the two sheets loads last depends on the route you arrive from. */
+  div.nav-fade {
+    height: calc(env(safe-area-inset-top) + 52px);
+    background: rgba(5, 7, 13, 0.72);
+    background-image: none;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(33, 43, 64, 0.6);
+  }
+}

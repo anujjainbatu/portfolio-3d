@@ -925,26 +925,62 @@ html.chat-modal-open body {
 /* ------------------------------------------------------------------ Mobile */
 
 @media only screen and (max-width: 767px) {
+  /* The rotated text rail ran along the content edge in low-contrast grey.
+     On phones it becomes a single floating button; Resume lives in the hero
+     and the Contact section instead. */
   .portfolio-chat__rail {
-    right: 15px;
-    bottom: max(40px, env(safe-area-inset-bottom));
-    flex-direction: row-reverse;
-    align-items: flex-end;
-    gap: 22px;
-    transform: rotate(-90deg) translateX(100%);
-    transform-origin: right bottom;
+    right: 16px;
+    bottom: calc(env(safe-area-inset-bottom) + 20px);
+    gap: 0;
   }
 
-  .portfolio-chat__launcher,
   .portfolio-chat__rail-link {
-    font-size: 15px;
-    line-height: 15px;
+    display: none;
   }
 
-  .portfolio-chat__launcher > span,
-  .portfolio-chat__rail-link > span {
-    margin-top: -1px;
-    font-size: 17px;
+  .portfolio-chat__launcher {
+    position: relative;
+    width: 52px;
+    height: 52px;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    border-radius: 50%;
+    color: var(--ink);
+    background: rgba(18, 23, 36, 0.82);
+    border: 1px solid rgba(var(--accent-rgb), 0.45);
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45),
+      0 0 18px rgba(var(--accent-rgb), 0.25);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    letter-spacing: 0;
+  }
+
+  .portfolio-chat__launcher:hover {
+    color: var(--ink);
+  }
+
+  .portfolio-chat__launcher .hover-link {
+    display: none;
+  }
+
+  .portfolio-chat__launcher > span {
+    display: flex;
+    font-size: 26px;
+    color: var(--accentColor);
+  }
+
+  /* "Online" dot, so the button reads as a live assistant */
+  .portfolio-chat__launcher::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--signal);
+    border: 2px solid var(--void);
   }
 }
 

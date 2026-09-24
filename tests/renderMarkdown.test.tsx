@@ -7,7 +7,7 @@ const TABLE = [
   "",
   "| Project | Impact |",
   "|---------|--------|",
-  "| **WhatsApp commerce** | ~₹15L/month attributed |",
+  "| **WhatsApp & email commerce** | 43× ROAS |",
   "| Fiverr backends | Repeat problems cut by 60 % |",
   "",
   "These translate into revenue and reliability.",
@@ -19,7 +19,7 @@ describe("renderMarkdown", () => {
 
     expect(container.querySelectorAll("th")).toHaveLength(2);
     expect(container.querySelectorAll("tbody tr")).toHaveLength(2);
-    expect(screen.getByText("WhatsApp commerce").tagName).toBe("STRONG");
+    expect(screen.getByText("WhatsApp & email commerce").tagName).toBe("STRONG");
     expect(container.textContent).not.toContain("|");
     expect(container.textContent).not.toContain("---");
   });
@@ -50,7 +50,7 @@ describe("stripMarkdown", () => {
     const spoken = stripMarkdown(TABLE);
     expect(spoken).not.toContain("|");
     expect(spoken).not.toContain("**");
-    expect(spoken).toContain("WhatsApp commerce");
+    expect(spoken).toContain("WhatsApp & email commerce");
     expect(spoken).toContain("Project, Impact");
   });
 

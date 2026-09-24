@@ -1,9 +1,16 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./styles/WhatIDo.css";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { config } from "../config";
 
 const WhatIDo = () => {
+  // Touch devices get tap-to-open and scroll-to-open instead of hover.
+  const [isTouch] = useState(
+    () =>
+      Boolean(ScrollTrigger.isTouch) ||
+      window.matchMedia("(hover: none)").matches
+  );
+  const [active, setActive] = useState<number | null>(null);
   const containerRef = useRef<(HTMLDivElement | null)[]>([]);
   const innerRef = useRef<(HTMLDivElement | null)[]>([]);
   const setRef = (el: HTMLDivElement | null, index: number) => {
@@ -47,23 +54,52 @@ const WhatIDo = () => {
     };
   }, []);
 
+  /**
+   * On touch screens the card crossing the middle of the viewport opens as
+   * the page scrolls. The observed band is a thin strip at the centre; the
+   * opened card grows past it, so the choice does not flicker back and forth.
+   */
   useEffect(() => {
-    if (ScrollTrigger.isTouch) {
-      containerRef.current.forEach((container) => {
-        if (container) {
-          container.classList.remove("what-noTouch");
-          container.addEventListener("click", () => handleClick(container));
-        }
-      });
-    }
-    return () => {
-      containerRef.current.forEach((container) => {
-        if (container) {
-          container.removeEventListener("click", () => handleClick(container));
-        }
-      });
-    };
-  }, []);
+    if (!isTouch) return;
+    const cards = containerRef.current.filter(Boolean) as HTMLDivElement[];
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          const index = containerRef.current.indexOf(
+            entry.target as HTMLDivElement
+          );
+          if (index !== -1) setActive(index);
+        });
+      },
+      { rootMargin: "-49% 0px -50% 0px" }
+    );
+    cards.forEach((card) => observer.observe(card));
+    return () => observer.disconnect();
+  }, [isTouch]);
+
+  // A collapsed card starts from the top again when it next opens.
+  useEffect(() => {
+    innerRef.current.forEach((inner, index) => {
+      if (inner && index !== active) inner.scrollTop = 0;
+    });
+  }, [active]);
+
+  const cardProps = (index: number) => ({
+    ref: (el: HTMLDivElement | null) => setRef(el, index),
+    className: [
+      "what-content",
+      !isTouch && "what-noTouch",
+      active === index && "what-content-active",
+      active !== null && active !== index && "what-sibling",
+    ]
+      .filter(Boolean)
+      .join(" "),
+    onClick: isTouch
+      ? () => setActive((current) => (current === index ? null : index))
+      : undefined,
+  });
+
   return (
     <div className="whatIDO">
       <div className="what-box">
@@ -98,10 +134,7 @@ const WhatIDo = () => {
               />
             </svg>
           </div>
-          <div
-            className="what-content what-noTouch"
-            ref={(el) => setRef(el, 0)}
-          >
+          <div {...cardProps(0)}>
             <div className="what-border1">
               <svg height="100%">
                 <line
@@ -129,6 +162,7 @@ const WhatIDo = () => {
             <div
               className="what-content-in"
               ref={(el) => setInnerRef(el, 0)}
+              onScroll={isTouch ? (e) => e.currentTarget.scrollTop > 0 && setActive(0) : undefined}
             >
               <h3>{config.skills.build.title}</h3>
               <h4>{config.skills.build.description}</h4>
@@ -144,10 +178,7 @@ const WhatIDo = () => {
               <div className="what-arrow"></div>
             </div>
           </div>
-          <div
-            className="what-content what-noTouch"
-            ref={(el) => setRef(el, 1)}
-          >
+          <div {...cardProps(1)}>
             <div className="what-border1">
               <svg height="100%">
                 <line
@@ -165,6 +196,7 @@ const WhatIDo = () => {
             <div
               className="what-content-in"
               ref={(el) => setInnerRef(el, 1)}
+              onScroll={isTouch ? (e) => e.currentTarget.scrollTop > 0 && setActive(1) : undefined}
             >
               <h3>{config.skills.integrate.title}</h3>
               <h4>{config.skills.integrate.description}</h4>
@@ -187,18 +219,3 @@ const WhatIDo = () => {
 };
 
 export default WhatIDo;
-
-function handleClick(container: HTMLDivElement) {
-  container.classList.toggle("what-content-active");
-  container.classList.remove("what-sibling");
-  if (container.parentElement) {
-    const siblings = Array.from(container.parentElement.children);
-
-    siblings.forEach((sibling) => {
-      if (sibling !== container) {
-        sibling.classList.remove("what-content-active");
-        sibling.classList.toggle("what-sibling");
-      }
-    });
-  }
-}

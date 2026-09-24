@@ -14,7 +14,7 @@ import {
   FiTrash2,
   FiX,
 } from "react-icons/fi";
-import { TbMessage, TbNotes } from "react-icons/tb";
+import { TbNotes, TbRobotFace } from "react-icons/tb";
 import { config } from "../config";
 import HoverLinks from "../components/HoverLinks";
 import { useChat } from "./ChatContext";
@@ -258,7 +258,7 @@ const ChatWidget = () => {
           >
             <HoverLinks text="LET'S TALK" />
             <span aria-hidden="true">
-              <TbMessage />
+              <TbRobotFace />
             </span>
           </button>
           <a

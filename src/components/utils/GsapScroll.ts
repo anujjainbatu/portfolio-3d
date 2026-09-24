@@ -170,6 +170,84 @@ const FALL_POSE_BLEND = 0.12;
  */
 const FALL_FACE_Y = -Math.PI / 2;
 
+/**
+ * The footer peek. He leans back in from behind the right edge of the viewport,
+ * just above the fixed chat rail, and points down at LET'S TALK.
+ *
+ * Pulled in from the STAND_CAM_Z the journey ends on. At 165 he stands about
+ * 110px tall and his whole arm measures 54px, which made the jab too small a
+ * movement to register as pointing at anything. At 130 he is about 140px with a
+ * 69px arm, so the gesture has room to travel. follow() writes the camera every
+ * frame once it takes back over, so nothing needs handing back.
+ */
+const PEEK_CAM_Z = 130;
+const PEEK_CAM_Y = ROPE_CAM_Y;
+/**
+ * Square to the camera. He is leaning out of the edge rather than standing at
+ * it, so the lean does the work a yaw would otherwise do — and leaving the yaw
+ * at zero puts both arms flat in the screen plane, which is where the pointing
+ * arm reads at its full length.
+ */
+const PEEK_FACE_Y = 0;
+/**
+ * How far he tips out of the edge, about his feet. This is the whole silhouette
+ * of the beat: a figure canted out from behind the frame, the way someone leans
+ * around a doorway to point at something. A positive z rotation swings his head
+ * towards screen-left, which is out into the page.
+ */
+const PEEK_LEAN_Z = Math.PI / 4;
+/**
+ * How far his MIDDLE sits inside the canvas's right edge.
+ *
+ * His middle, not his feet, because the lean rotates about the model origin and
+ * the origin is between his feet — anchoring there swings the whole body out of
+ * frame as the angle grows, which had him lying diagonally across the corner
+ * with his legs off screen. Anchored at the waist the framing holds at any lean,
+ * and at 45 degrees his feet fall outside the edge on their own, so the pivot is
+ * hidden and what shows is the top of him canted out.
+ */
+const PEEK_INSET_PX = 62;
+/** Half his height in world units — the model is 4.6 tall, feet on the origin. */
+const PEEK_HALF_H = 2.3;
+/**
+ * How far above the rail's top his middle sits.
+ *
+ * Kept short. His arm measures about 54px on screen at this camera whatever the
+ * pose does — that is simply its length — so every pixel of gap between his hand
+ * and the text is empty space the eye has to cross before the point lands.
+ */
+const PEEK_GAP_PX = 76;
+/** How far further right he waits before leaning in. */
+const PEEK_ENTER_PX = 150;
+/**
+ * Jabs per second while he holds the point.
+ *
+ * The gesture is the hand travelling roughly 22px back and forth ALONG the line
+ * it is pointing down — the two ends of POINT_POSE — rather than the arm rising
+ * and falling across it, which is what modulating a single pose's weight gave
+ * and which read as a wave.
+ */
+const PEEK_JAB_HZ = 1.15;
+/**
+ * How much of the lean the head cancels out.
+ *
+ * Not for realism — for legibility. His head is a wide flat dome with two eyes
+ * side by side, so tipping it 45 degrees stacks the eyes diagonally and it stops
+ * reading as a face looking at you; the whole figure then reads as lying down
+ * rather than leaning out. Holding the head close to level while the body tips
+ * is the same thing a person does leaning around a doorway, and it is what makes
+ * the angle read as a lean. Short of 1 so the head is not eerily rigid.
+ */
+const PEEK_HEAD_LEVEL = 0.85;
+/** Lean-in and withdraw times, in seconds. */
+const PEEK_IN = 0.75;
+const PEEK_OUT = 0.4;
+/**
+ * Where his feet go when the rail is not in the DOM at all. Only reached while
+ * he is already sliding out, so it just needs to be somewhere sane.
+ */
+const PEEK_RAIL_FALLBACK_PX = 120;
+
 const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
 /** Smoothstep: eases both ends so the hand-off has no velocity discontinuity. */
 const ease = (t: number) => t * t * (3 - 2 * t);
@@ -178,6 +256,19 @@ const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 /** Module-scoped so a re-run (resize rebuilds the timelines) cannot leak one. */
 let ropeTicker: (() => void) | null = null;
 let ropeTrigger: ScrollTrigger | null = null;
+let peekTicker: ((time: number) => void) | null = null;
+let peekTrigger: ScrollTrigger | null = null;
+/**
+ * The footer peek has the character.
+ *
+ * The two ScrollTriggers overlap: the rope's runs to .techstack-new "bottom
+ * top", and the peek starts when .contact-section reaches 80% of the viewport —
+ * which is before the tech section has finished leaving. Without this, follow()
+ * is still writing position, rotation and the canvas transform every frame and
+ * fights the peek for them. By that point follow() has nothing left to say
+ * anyway: the fall is complete and he is sunk and faded.
+ */
+let peekActive = false;
 
 /**
  * Hang the character off the growing career timeline.
@@ -221,8 +312,6 @@ function setRopeDescent(
   let runWeight = 0;
   /** So the page only takes over once per departure from the platform. */
   let autoScrolled = false;
-  /** The canvas offset tl3 leaves behind, put back when he is not falling. */
-  let restCanvasY: number | null = null;
 
   const section = document.querySelector<HTMLElement>(".career-section");
   const workSection = document.querySelector<HTMLElement>(".work-section");
@@ -243,6 +332,8 @@ function setRopeDescent(
   let restYaw: number | null = null;
 
   const follow = () => {
+    // The footer peek owns him from here on; see peekActive.
+    if (peekActive) return;
     const canvas = model.getBoundingClientRect();
     if (canvas.width === 0 || canvas.height === 0) return;
     const tip = dot.getBoundingClientRect();
@@ -433,11 +524,6 @@ function setRopeDescent(
     if (fall <= 0) {
       characterControls?.setFall(0, 0);
       character.scale.setScalar(1);
-      if (restCanvasY !== null) {
-        // Hand the canvas offset back to tl3 on the way up.
-        gsap.set(".character-model", { y: restCanvasY });
-        restCanvasY = null;
-      }
       character.position.set(onPlatformX, onPlatformY, onPlatformZ);
       return;
     }
@@ -454,9 +540,11 @@ function setRopeDescent(
     // edge and leaving just a sliver of his head. Cover the viewport while he
     // falls. This does not move him: the projection above reads the canvas's
     // live rect, so shifting the canvas is compensated in the same frame.
-    if (restCanvasY === null) {
-      restCanvasY = (gsap.getProperty(".character-model", "y") as number) || 0;
-    }
+    //
+    // Nothing hands this back, for the same reason setContactPeek does not —
+    // see the note there. tl3 owns y and rewrites it as soon as its own range
+    // is scrubbed again; until then the offset is invisible, and covering more
+    // of the viewport than tl3 asked for can only clip less.
     gsap.set(".character-model", { y: 0 });
 
     // Where the video actually sits after object-fit: cover crops it.
@@ -570,6 +658,186 @@ function setRopeDescent(
 }
 
 /**
+ * The last beat: peek in from the right edge of the footer and point at the
+ * chat rail.
+ *
+ * Deliberately NOT scroll-scrubbed, unlike everything before it. The rest of the
+ * journey is a thing the reader drags along a line; this is a reaction to
+ * arriving somewhere, so it plays on its own clock once the footer's name is on
+ * screen and simply holds.
+ *
+ * Its target, .portfolio-chat__launcher, is position: fixed and is unmounted
+ * while the chat panel is open — so reading it once a frame serves as both the
+ * aim point and the signal to withdraw, with no event wiring to keep in sync.
+ */
+function setContactPeek(
+  character: THREE.Object3D,
+  camera: THREE.PerspectiveCamera
+) {
+  const model = document.querySelector<HTMLElement>(".character-model");
+  const section = document.querySelector<HTMLElement>(".contact-section");
+  if (!model || !section) return;
+
+  if (peekTicker) {
+    gsap.ticker.remove(peekTicker);
+    peekTicker = null;
+  }
+  if (peekTrigger) {
+    peekTrigger.kill();
+    peekTrigger = null;
+  }
+
+  const reduceMotion = window.matchMedia(
+    "(prefers-reduced-motion: reduce)"
+  ).matches;
+
+  /** 0 waiting off the edge, 1 leaning in and pointing. */
+  const peek = { t: 0 };
+  /** Edge-triggered, so opening the chat starts one withdrawal, not sixty. */
+  let railPresent = false;
+
+  const railEl = () =>
+    document.querySelector<HTMLElement>(".portfolio-chat__launcher");
+
+  const slide = (to: number) => {
+    gsap.killTweensOf(peek);
+    if (reduceMotion) {
+      peek.t = to;
+      return;
+    }
+    gsap.to(peek, {
+      t: to,
+      duration: to > 0 ? PEEK_IN : PEEK_OUT,
+      ease: to > 0 ? "power3.out" : "power2.in",
+    });
+  };
+
+  const draw = (time: number) => {
+    const canvas = model.getBoundingClientRect();
+    if (canvas.width === 0 || canvas.height === 0) return;
+
+    const rail = railEl();
+    const present = !!rail;
+    if (present !== railPresent) {
+      railPresent = present;
+      slide(present ? 1 : 0);
+    }
+
+    const dist = camera.position.z;
+    const visibleH =
+      (2 * dist * Math.tan((camera.fov * Math.PI) / 360)) / camera.zoom;
+    const visibleW = visibleH * camera.aspect;
+
+    // Anchored to the CANVAS's right edge, not the viewport's. .character-model
+    // is capped at max-width: 1920, so on anything wider the viewport edge lies
+    // outside the render and anchoring there would park him past its boundary.
+    const edgeX = Math.min(window.innerWidth, canvas.right);
+    const railTop = rail
+      ? rail.getBoundingClientRect().top
+      : window.innerHeight - PEEK_RAIL_FALLBACK_PX;
+
+    const screenX = edgeX - PEEK_INSET_PX + (1 - peek.t) * PEEK_ENTER_PX;
+    const screenY = railTop - PEEK_GAP_PX;
+
+    const fx = (screenX - canvas.left) / canvas.width;
+    const fy = (screenY - canvas.top) / canvas.height;
+    const midX = camera.position.x + (fx - 0.5) * visibleW;
+    const midY = camera.position.y + (0.5 - fy) * visibleH;
+
+    // The tip out of the edge and the arm come in together, so the whole thing
+    // reads as one movement — leaning out to point — rather than a robot
+    // arriving already canted over.
+    const lean = PEEK_LEAN_Z * peek.t;
+    character.rotation.z = lean;
+
+    // Place his middle on the anchor and work back to the origin, which is what
+    // position actually sets. Rotating his middle by the lean and subtracting it
+    // keeps the waist on the anchor however far over he is tipped.
+    character.position.set(
+      midX + PEEK_HALF_H * Math.sin(lean),
+      midY - PEEK_HALF_H * Math.cos(lean),
+      0
+    );
+
+    // Driven off the ticker's own clock rather than a per-frame increment, so
+    // the jab keeps the same tempo whatever the frame rate. Held fully extended
+    // under reduced motion: still a point, just not a repeating one.
+    const jab = reduceMotion
+      ? 1
+      : 0.5 - 0.5 * Math.cos(time * PEEK_JAB_HZ * Math.PI * 2);
+    characterControls?.setPointWeight(peek.t, jab);
+    characterControls?.setHeadRoll(-lean * PEEK_HEAD_LEVEL);
+  };
+
+  const engage = () => {
+    // release(false) leaves a delayed opacity-0 tween in flight. Left alone it
+    // lands a second into the entrance and fades him straight back out.
+    gsap.killTweensOf(".character-model");
+    peekActive = true;
+
+    // He arrives here on his back in the Death pose, yawed to FALL_FACE_Y and
+    // shrunk into the pit — the fall never hands any of that back, because
+    // until now nothing came after it.
+    characterControls?.resumeIdle();
+    character.scale.setScalar(1);
+    character.rotation.y = PEEK_FACE_Y;
+    character.rotation.z = 0; // draw() takes it from here, tied to the entrance
+    // rotation.x is left alone: tl3 owns it by scrub and restores it on the way
+    // back up, and at -0.04 the difference is not visible anyway.
+
+    camera.position.z = PEEK_CAM_Z;
+    camera.position.y = PEEK_CAM_Y;
+
+    // tl2 parks the canvas 12% left, which stops it ~173px short of the right
+    // edge — exactly the strip he has to reach. Cover the viewport while he is
+    // here; draw() reads the live rect, so this is compensated the same frame.
+    //
+    // Nothing puts this back on the way out, deliberately. A one-shot gsap.set
+    // from a ScrollTrigger callback lands AFTER the scrub tweens in the same
+    // update, so restoring here left the canvas pinned at the journey's end
+    // offset and tl1/tl3 never got it back. They own x and y, and they reassert
+    // them the moment their own ranges are entered. In between the offset is
+    // invisible — the canvas is transparent, its gradients are display: none
+    // above 1024px, and everything that places him reads its live rect — so
+    // leaving it covering the viewport costs nothing and clips nothing.
+    gsap.set(".character-model", { x: 0, y: 0, opacity: 1 });
+
+    railPresent = !!railEl();
+    peek.t = 0;
+    if (!peekTicker) {
+      peekTicker = draw;
+      gsap.ticker.add(peekTicker);
+    }
+    slide(railPresent ? 1 : 0);
+  };
+
+  const release = () => {
+    gsap.killTweensOf(peek);
+    if (peekTicker) {
+      gsap.ticker.remove(peekTicker);
+      peekTicker = null;
+    }
+    peek.t = 0;
+    characterControls?.setPointWeight(0);
+    characterControls?.setHeadRoll(0);
+    peekActive = false;
+  };
+
+  peekTrigger = ScrollTrigger.create({
+    trigger: ".contact-section",
+    // The same start Contact.tsx uses to reveal its heading, so he arrives with
+    // the name rather than after it.
+    start: "top 80%",
+    end: "bottom top",
+    invalidateOnRefresh: true,
+    onEnter: engage,
+    onEnterBack: engage,
+    onLeave: release,
+    onLeaveBack: release,
+  });
+}
+
+/**
  * Scroll choreography for the hero.
  *
  * This was written around the desk scene that used to live here: the character
@@ -668,6 +936,7 @@ export function setCharTimeline(
         .to(character.rotation, { x: -0.04, duration: 2, delay: 1 }, 0);
 
       setRopeDescent(character, camera);
+      setContactPeek(character, camera);
     }
   } else {
     if (character) {

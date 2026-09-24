@@ -136,7 +136,7 @@ describe("ChatWidget", () => {
         ok: true,
         status: 200,
         headers: new Headers(),
-        json: async () => ({ message: "A WhatsApp commerce system." }),
+        json: async () => ({ message: "A WhatsApp and email commerce system." }),
       }),
     );
     renderWidget();

@@ -1,4 +1,4 @@
-import { FaGithub, FaLinkedinIn } from "react-icons/fa6";
+import { FaGithub, FaInstagram, FaLinkedinIn, FaWhatsapp, FaXTwitter } from "react-icons/fa6";
 import { MdMailOutline } from "react-icons/md";
 import "./styles/SocialIcons.css";
 import { useEffect } from "react";
@@ -62,6 +62,21 @@ const SocialIcons = () => {
         <span>
           <a href={config.contact.linkedin} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
             <FaLinkedinIn />
+          </a>
+        </span>
+        <span>
+          <a href={config.contact.twitter} target="_blank" rel="noopener noreferrer" aria-label="X">
+            <FaXTwitter />
+          </a>
+        </span>
+        <span>
+          <a href={config.contact.instagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+            <FaInstagram />
+          </a>
+        </span>
+        <span>
+          <a href={config.contact.whatsapp} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">
+            <FaWhatsapp />
           </a>
         </span>
         <span>

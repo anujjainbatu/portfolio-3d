@@ -4,8 +4,11 @@
  *
  * Rules this file is written under (see STORY.md):
  *  - Only real work. Nothing aspirational stated as if it already happened.
- *  - No client names. Describe them: "a D2C nutrition brand", "a large hospital".
- *  - No salary, no phone number, no mention of job searching.
+ *  - Keep client names private unless the work is already public and explicitly
+ *    approved for linking, as with the website projects below.
+ *  - No salary, no mention of job searching.
+ *  - Phone and WhatsApp are published on the website only; the chat
+ *    assistant does not receive them (see server/chatPolicy.ts).
  *  - Dates as years only.
  */
 
@@ -61,13 +64,75 @@ export const config = {
     /** The two lines that animate in the hero, and the loader marquee. */
     roles: ["AI Solutions Engineer", "Commerce Automation"],
     description:
-      "AI solutions engineer working across Shopify, WhatsApp, n8n and AI agents. Integration architecture, revenue attribution and internal tooling.",
+      "AI solutions engineer working across Shopify, WhatsApp, email, n8n and AI agents. Integration architecture, revenue attribution and internal tooling.",
+    /**
+     * Roles the work maps onto, for search engines and structured data.
+     * Deliberately no ML or Research Engineer: nothing here defends that claim.
+     */
+    alternateTitles: [
+      "Solutions Engineer",
+      "AI Solutions Architect",
+      "Forward Deployed Engineer",
+      "Customer Engineer",
+      "Integration Engineer",
+      "Automation Engineer",
+      "Developer Experience Engineer",
+    ],
   },
 
   social: {
     github: "anujjainbatu",
     email: "anujjainbatu@gmail.com",
     location: "Hyderabad, India",
+  },
+
+  site: {
+    url: "https://anujjain.in",
+    ogImage: "/og-image.png",
+    ogImageAlt: "Anuj Jain, AI Solutions Engineer",
+    locale: "en_IN",
+    twitterHandle: "@anujainbatu",
+  },
+
+  location: {
+    city: "Hyderabad",
+    region: "Telangana",
+    regionCode: "IN-TG",
+    country: "IN",
+    mapsUrl: "https://www.google.com/maps/place/Hyderabad,+Telangana,+India",
+  },
+
+  seo: {
+    keywords: [
+      "AI Solutions Engineer",
+      "Solutions Engineer Hyderabad",
+      "Forward Deployed Engineer",
+      "AI automation",
+      "AI agents",
+      "n8n automation",
+      "Shopify automation",
+      "WhatsApp Business API",
+      "Email marketing automation",
+      "Revenue attribution",
+      "API integration",
+      "Integration architecture",
+      "Voice AI lead qualification",
+      "Python",
+      "FastAPI",
+      "Django",
+    ],
+    routes: {
+      "/": {
+        title: "Anuj Jain | AI Solutions Engineer",
+        description:
+          "AI solutions engineer in Hyderabad working across Shopify, WhatsApp, email, n8n and AI agents. Integration architecture, revenue attribution and internal tooling, running in 20+ client environments.",
+      },
+      "/myworks": {
+        title: "Work: Production AI & Automation Systems | Anuj Jain",
+        description:
+          "Eight production systems by Anuj Jain: WhatsApp and email commerce, revenue attribution, AI voice lead qualification, ad-budget forecasting, internal tooling and healthcare websites.",
+      },
+    } as Record<string, { title: string; description: string }>,
   },
 
   about: {
@@ -92,7 +157,7 @@ export const config = {
       period: "2026 - Present",
       location: "Hyderabad, India",
       description:
-        "Hired for WhatsApp marketing automation. Now spanning automation, integrations, web development, internal tooling and pre-sales.",
+        "Hired for WhatsApp and email marketing automation. Now spanning automation, integrations, web development, internal tooling and pre-sales.",
       current: true,
     },
     {
@@ -115,19 +180,19 @@ export const config = {
   ] as Experience[],
 
   /**
-   * Six systems in production. The first five feed the home page carousel;
-   * all six appear on /myworks.
+   * Eight systems in production. The first five feed the home page carousel;
+   * all eight appear on /myworks.
    */
   projects: [
     {
       id: 1,
-      title: "WhatsApp commerce platform",
+      title: "WhatsApp & email commerce platform",
       scale: "8 Shopify stores",
       technologies: "Shopify · Interakt · n8n · AI agents",
-      flow: ["Shopify", "n8n", "AI agent", "WhatsApp", "Revenue"],
+      flow: ["Shopify", "n8n", "AI agent", "WhatsApp / Email", "Revenue"],
       description:
         "Customer segmentation and lifecycle journeys: abandoned-cart recovery, repeat purchase, post-purchase engagement and retention. Built on Shopify, Interakt and n8n, with AI agents handling the conversation.",
-      result: "~₹15L/month in attributed revenue for a D2C nutrition brand",
+      result: "43× ROAS for a D2C nutrition brand",
       status: "live",
       link: "",
     },
@@ -148,9 +213,9 @@ export const config = {
       title: "AI lead qualification & sales",
       scale: "6 hospitals and clinics",
       technologies: "Meta Lead Forms · n8n · ElevenLabs · Interakt · Zapier",
-      flow: ["Lead form", "n8n", "Voice AI", "WhatsApp", "CRM", "Sales alert"],
+      flow: ["Lead form", "n8n", "Voice AI", "WhatsApp / Email", "CRM", "Sales alert"],
       description:
-        "A lead arrives, an AI voice agent calls and qualifies it, WhatsApp follows up, a meeting gets scheduled, the CRM is updated and sales are alerted live. What used to be manual chasing now runs end to end.",
+        "A lead arrives, an AI voice agent calls and qualifies it, WhatsApp and email follow-ups run automatically, a meeting gets scheduled, the CRM is updated and sales are alerted live. What used to be manual chasing now runs end to end.",
       status: "live",
       link: "",
     },
@@ -171,7 +236,7 @@ export const config = {
       title: "Internal task manager",
       scale: "Company-wide",
       technologies: "Next.js · PostgreSQL · AI-assisted build",
-      flow: ["Tasks", "Credentials", "Audit log"],
+      flow: ["Create task", "Assign owner", "Track progress", "Complete"],
       description:
         "We were paying around $300 a month for a tool that was heavier than a small team needed. I built ours instead, and it has stayed a continuous project. The newest piece is a credential manager that logs who revealed which password, and when.",
       result: "Replaced a ~$300/month subscription",
@@ -180,14 +245,36 @@ export const config = {
     },
     {
       id: 6,
-      title: "Websites, shipped with AI",
-      scale: "Primary web developer",
-      technologies: "Next.js · WordPress migration · AI-assisted development",
-      flow: ["Brief", "AI-assisted build", "Launch"],
+      title: "UniCare Global Hospitals",
+      scale: "45+ pages · Multi-specialty hospital",
+      technologies: "React · Vite · SEO · Appointment journeys",
+      flow: ["Specialty", "Doctor", "Appointment", "WhatsApp / Email"],
       description:
-        "A 45-page site for a large multi-specialty hospital, and every non-Shopify site the company ships. Currently migrating three hospital sites from WordPress to Next.js. I use AI to write code and say so; the interesting part was never who typed it.",
-      status: "in progress",
-      link: "",
+        "Built and launched a multi-specialty hospital website with dedicated specialty and doctor journeys, health packages, editorial content, and conversion paths across web booking, WhatsApp, email, and phone.",
+      status: "live",
+      link: "https://unicareglobalhospitals.com",
+    },
+    {
+      id: 7,
+      title: "CareGear",
+      scale: "Healthcare apparel storefront",
+      technologies: "Shopify · E-commerce · Product merchandising",
+      flow: ["Collection", "Product", "Cart", "Checkout"],
+      description:
+        "Built the storefront experience for a medical apparel brand, organizing scrub collections by fit and audience with product variants, quick shopping paths, promotional offers, and a streamlined Shopify checkout.",
+      status: "live",
+      link: "https://caregear.in",
+    },
+    {
+      id: 8,
+      title: "Neo Fertility & IVF Clinic",
+      scale: "Specialist clinic website",
+      technologies: "React · Vite · Local SEO · Appointment journeys",
+      flow: ["Treatment", "Doctor", "Consultation", "Appointment"],
+      description:
+        "Built a clinic website around treatment discovery and appointment conversion, with dedicated fertility and gynecology service pages, doctor-led credibility, local SEO, and direct consultation paths.",
+      status: "live",
+      link: "https://neofertility.co.in",
     },
   ] as Project[],
 
@@ -203,13 +290,13 @@ export const config = {
       detail: "Selected from 60,000+ applicants",
     },
     {
-      year: "—",
+      year: "",
       title: "Google Developer Group",
       detail:
         "Technical Lead: workshops and live demos on Python, API design and AI for 250+ members",
     },
     {
-      year: "—",
+      year: "",
       title: "Certifications",
       detail:
         "Machine Learning Specialisation (Stanford & DeepLearning.AI) · Python (IIT Madras, NPTEL)",
@@ -220,6 +307,12 @@ export const config = {
     email: "anujjainbatu@gmail.com",
     github: "https://github.com/anujjainbatu",
     linkedin: "https://linkedin.com/in/anujjainbatu",
+    twitter: "https://x.com/anujainbatu",
+    instagram: "https://instagram.com/anujjainbatu",
+    phone: "+918305117236",
+    phoneDisplay: "+91 83051 17236",
+    whatsapp: "https://wa.me/918897817236",
+    whatsappDisplay: "+91 88978 17236",
     resume: "/anuj-jain-resume.pdf",
   },
 
@@ -228,7 +321,7 @@ export const config = {
       title: "AI & AUTOMATION",
       description: "Systems that run without anyone watching",
       details:
-        "AI agents and workflow automation wired into the tools a business already runs — lead qualification, lifecycle messaging, reporting that writes itself. Built on n8n, Python and the major model APIs, with structured logging, retries and error recovery so they hold up in production.",
+        "AI agents and workflow automation wired into the tools a business already runs: lead qualification, lifecycle messaging, reporting that writes itself. Built on n8n, Python and the major model APIs, with structured logging, retries and error recovery so they hold up in production.",
       tools: [
         "n8n",
         "Python",
@@ -246,10 +339,10 @@ export const config = {
       title: "COMMERCE & INTEGRATION",
       description: "Making the tools talk to each other",
       details:
-        "Shopify, WhatsApp and the ad platforms joined into one system, with the attribution to prove it worked. REST contracts, webhooks and API specifications written for the engineering teams that build against them.",
+        "Shopify, WhatsApp, email, and the ad platforms joined into one system, with the attribution to prove it worked. REST contracts, webhooks and API specifications written for the engineering teams that build against them.",
       tools: [
         "Shopify",
-        "WhatsApp Business API",
+        "WhatsApp Business API / Email automation",
         "Interakt",
         "Payment gateways",
         "Meta Ads",

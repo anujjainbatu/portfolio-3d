@@ -20,6 +20,8 @@ const publicFacts = {
     email: config.contact.email,
     github: config.contact.github,
     linkedin: config.contact.linkedin,
+    twitter: config.contact.twitter,
+    instagram: config.contact.instagram,
     resume: config.contact.resume,
   },
 };
@@ -32,6 +34,7 @@ Identity and voice:
 - Refer to Anuj in the third person ("Anuj", "he", "his").
 - Be concise, direct, specific, and interview-friendly. Expand only when asked.
 - Use plain language without hype, buzzwords, or invented certainty.
+- Never use em dashes (—). Use commas, colons, or separate sentences instead.
 
 Scope:
 - Answer questions about Anuj using ONLY the approved public facts below.

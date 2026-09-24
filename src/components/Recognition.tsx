@@ -10,7 +10,7 @@ const Recognition = () => {
       <div className="recognition-list">
         {config.recognition.map((item) => (
           <div className="recognition-row" key={item.title}>
-            <span className="recognition-year">{item.year}</span>
+            {item.year && <span className="recognition-year">{item.year}</span>}
             <div className="recognition-body">
               <h4>{item.title}</h4>
               <p>{item.detail}</p>

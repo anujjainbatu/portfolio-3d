@@ -49,6 +49,57 @@ const HANG_POSE: { bone: string; rot: Rot }[] = [
   { bone: "UpperArmR", rot: [-1.404, 1.627, -1.147] },
   { bone: "LowerArmR", rot: [-0.032, 1.049, -0.367] },
 ];
+/**
+ * Pointing at the chat rail from the footer peek.
+ *
+ * Solved the same way and with the same caveats as HANG_POSE above, against the
+ * live scene: a hill climb over the two bones' Euler offsets, minimising the
+ * screen-space angle between the forearm (elbow to Index2R) and the start of the
+ * text in .portfolio-chat__launcher, while holding the arm at full extension and
+ * clear of the head and torso silhouettes. Converged to 0.5 degrees of error.
+ *
+ * Aimed at the start of the text rather than its middle deliberately. The middle
+ * sits almost directly below him, and an arm pointing near-vertically runs down
+ * his own silhouette and reads as hanging at his side; the start of the text
+ * puts the line at roughly 45 degrees, where it separates from the body.
+ *
+ * Only the RIGHT arm is posed. He faces the camera square through the peek and
+ * leans out of the edge rather than turning (PEEK_LEAN_Z in GsapScroll.ts), which
+ * leaves the target down and to his right — the side this arm is already on. The
+ * left would have to cross his chest to reach it, so it stays where Idle leaves
+ * it, at his side.
+ *
+ * The solve is constrained to keep the elbow near the shoulder-to-hand line.
+ * Without that it folded: a bent arm spans the same screen distance as a straight
+ * one and scores identically on reach, but reads as an arm tucked in rather than
+ * a point.
+ *
+ * Two poses, not one: `rot` is the arm drawn back to the shoulder and `rot2` is
+ * it fully extended, both solved to aim at the same point. GsapScroll.ts
+ * oscillates between them, so the fingertip travels about 47px straight down the
+ * line it is pointing along and back — a jab, which is what pointing something
+ * out actually looks like.
+ *
+ * It has to be two solved poses. Modulating a single pose's weight is cheaper
+ * and was tried first, but the arc from rest to "pointing" runs ACROSS the aim
+ * line, not along it — the hand swung at about 75 degrees to where it pointed
+ * and read as a wave. Solving the near end for a short reach and the far end for
+ * a long one, both aimed at the target, puts the travel on the line itself.
+ *
+ * The near end is additionally solved to stay close to the far end in JOINT
+ * space, not just on screen. Two poses that look adjacent in the render can sit
+ * in quite different corners of configuration space, and the slerp between those
+ * bows the hand out sideways instead of drawing it straight back. Its aim is
+ * looser as a result (about 13 degrees), which does not matter: the arm is tucked
+ * in at that end and it is the extended end that has to point true.
+ *
+ * Both ends are solved against PEEK_CAM_Z, so moving the camera changes the
+ * arm's length on screen and both poses need re-solving together.
+ */
+const POINT_POSE: { bone: string; rot: Rot; rot2: Rot }[] = [
+  { bone: "UpperArmR", rot: [1.101, 0.143, 0.894], rot2: [1.16, 0.155, 0.07] },
+  { bone: "LowerArmR", rot: [0.504, 1.693, -0.631], rot2: [-0.084, 1.2, -0.631] },
+];
 /** Played once when the robot reaches the bottom of the rope. */
 const LAND = "Standing";
 /** Run-on-the-spot cycle for the Work platform. Carries no root motion. */
@@ -70,6 +121,8 @@ const CHAT_ANSWER = "Yes";
  */
 export let characterControls: {
   setHangWeight: (w: number) => void;
+  setPointWeight: (w: number, mix?: number) => void;
+  setHeadRoll: (radians: number) => void;
   setRun: (weight: number, phase: number) => void;
   setFall: (weight: number, phase: number) => void;
   land: () => void;
@@ -153,64 +206,156 @@ const setAnimations = (gltf: GLTF) => {
    * instead of snapping into it.
    */
   const hang = { weight: 0 };
+  /**
+   * The same, for the footer peek's pointing arm, plus `mix`: where the hand
+   * sits between the drawn-back and fully extended ends of POINT_POSE. The
+   * scroll code oscillates it to jab.
+   */
+  const point = { weight: 0, mix: 0 };
+
+  type PosedBone = {
+    node: THREE.Object3D;
+    rest: THREE.Quaternion;
+    posed: THREE.Quaternion;
+    /** Optional far end of a two-pose gesture; see the point's jab. */
+    posed2: THREE.Quaternion | null;
+  };
 
   // GLTFLoader sanitises node names and strips dots, so the rig's "UpperArm.L"
   // reaches three.js as "UpperArmL". Looking it up by the glTF spelling
   // silently returns undefined and the arms never move.
   //
+  // The rig also carries duplicate names — Shoulder.L, Torso and Head each exist
+  // as both a bone and a mesh — so getObjectByName can hand back a mesh. Nothing
+  // guards that explicitly because restPose holds bones only, so a mesh fails
+  // the lookup below and is filtered out.
+  //
   // The target is precomputed from the REST rotation, because that is what the
-  // pose was solved against — not from whatever Idle happens to be playing.
-  const hangBones = HANG_POSE.map(({ bone, rot }) => {
-    const node = character.getObjectByName(bone);
-    const rest = node && restPose.get(node);
-    return {
-      node,
-      rest: rest ?? null,
-      posed: rest
-        ? rest
-            .clone()
-            .multiply(
-              new THREE.Quaternion().setFromEuler(
-                new THREE.Euler(rot[0], rot[1], rot[2])
-              )
-            )
-        : null,
-    };
-  }).filter((b) => b.node && b.rest && b.posed);
+  // poses were solved against — not from whatever Idle happens to be playing.
+  const offset = (rest: THREE.Quaternion, rot: Rot) =>
+    rest
+      .clone()
+      .multiply(
+        new THREE.Quaternion().setFromEuler(
+          new THREE.Euler(rot[0], rot[1], rot[2])
+        )
+      );
+
+  const resolvePose = (
+    pose: { bone: string; rot: Rot; rot2?: Rot }[]
+  ): PosedBone[] =>
+    pose
+      .map(({ bone, rot, rot2 }) => {
+        const node = character.getObjectByName(bone);
+        const rest = node && restPose.get(node);
+        return {
+          node,
+          rest: rest ?? null,
+          posed: rest ? offset(rest, rot) : null,
+          posed2: rest && rot2 ? offset(rest, rot2) : null,
+        };
+      })
+      .filter((b): b is PosedBone => !!(b.node && b.rest && b.posed));
 
   /**
-   * Blend the arms towards the grip. Must run after every mixer.update(), which
-   * Scene.tsx does from the render loop.
+   * Every pose this module lays over the mixer, each with its own live weight.
    *
-   * Only the four arm bones are touched, so whatever clip is playing keeps
-   * driving the rest of the body.
-   *
-   * While the grip is on, it rebuilds from the REST rotation rather than
-   * slerping the bone's current value: Idle animates only Head, Body and the
-   * four leg bones, so with nothing overwriting the arms each frame, slerping
-   * in place accumulated and left them stuck raised after the weight dropped.
-   *
-   * Once the weight reaches 0 it resets to rest ONCE and then stops writing, so
-   * the mixer can own the arms again. That matters for Running, which does
-   * animate all four — holding them at rest every frame would flatten its arm
-   * swing into a marionette.
+   * The grip and the point belong to different stretches of the page and never
+   * run together, so they are applied in order rather than blended: if they ever
+   * did overlap, the later entry would simply win on any bone they share.
    */
-  let gripApplied = false;
+  const poses: {
+    bones: PosedBone[];
+    state: { weight: number; mix?: number };
+  }[] = [
+    { bones: resolvePose(HANG_POSE), state: hang },
+    { bones: resolvePose(POINT_POSE), state: point },
+  ];
+
+  /**
+   * Blend the arms towards whichever pose is active. Must run after every
+   * mixer.update(), which Scene.tsx does from the render loop.
+   *
+   * Only arm bones are touched, so whatever clip is playing keeps driving the
+   * rest of the body.
+   *
+   * While a pose is on, it rebuilds from the REST rotation rather than slerping
+   * the bone's current value: Idle animates only Head, Body and the four leg
+   * bones, so with nothing overwriting the arms each frame, slerping in place
+   * accumulated and left them stuck raised after the weight dropped.
+   *
+   * A bone written last frame but not this one is reset to rest ONCE and then
+   * left alone, so the mixer can own it again. That matters for Running, which
+   * does animate all four arm bones — holding them at rest every frame would
+   * flatten its arm swing into a marionette. It is also what stops the grip
+   * leaving an arm raised when the point takes over, and vice versa.
+   */
+  /**
+   * Roll applied to the head after the mixer, to keep it level while the body
+   * is tipped over.
+   *
+   * It has to live here rather than with the scroll code because Idle animates
+   * the Head bone: anything written before mixer.update is simply overwritten.
+   * Only .z is touched, which is the one channel handleHeadRotation (mouseUtils)
+   * leaves alone — it writes .x and .y for the cursor-follow.
+   */
+  const headRoll = { value: 0 };
+  let headBone: THREE.Object3D | null = null;
+  character.traverse((obj) => {
+    // "Head" is both a bone and a skinned mesh on this rig, so ask for the bone.
+    if (!headBone && (obj as THREE.Bone).isBone && obj.name === "Head") {
+      headBone = obj;
+    }
+  });
+  let headRolled = false;
+
+  function setHeadRoll(radians: number) {
+    headRoll.value = radians;
+  }
+
+  let written: PosedBone[] = [];
   function tick() {
-    if (hang.weight <= 0) {
-      if (!gripApplied) return;
-      for (const { node, rest } of hangBones) node!.quaternion.copy(rest!);
-      gripApplied = false;
+    if (headBone && (headRoll.value !== 0 || headRolled)) {
+      (headBone as THREE.Object3D).rotation.z = headRoll.value;
+      headRolled = headRoll.value !== 0;
+    }
+    const active = poses.filter((p) => p.state.weight > 0);
+
+    if (active.length === 0) {
+      if (written.length === 0) return;
+      for (const { node, rest } of written) node.quaternion.copy(rest);
+      written = [];
       return;
     }
-    for (const { node, rest, posed } of hangBones) {
-      node!.quaternion.copy(rest!).slerp(posed!, hang.weight);
+
+    const now: PosedBone[] = [];
+    for (const { bones, state } of active) {
+      for (const bone of bones) {
+        bone.node.quaternion.copy(bone.rest).slerp(bone.posed, state.weight);
+        // Then on towards the far pose. Scaled by weight as well, so a gesture
+        // still easing in travels the same fraction of the way as the rest of
+        // the arm rather than snapping to its far end.
+        if (bone.posed2 && state.mix) {
+          bone.node.quaternion.slerp(bone.posed2, state.mix * state.weight);
+        }
+        now.push(bone);
+      }
     }
-    gripApplied = true;
+    for (const prev of written) {
+      if (!now.some((bone) => bone.node === prev.node)) {
+        prev.node.quaternion.copy(prev.rest);
+      }
+    }
+    written = now;
   }
 
   function setHangWeight(w: number) {
     hang.weight = Math.min(1, Math.max(0, w));
+  }
+
+  function setPointWeight(w: number, mix = 0) {
+    point.weight = Math.min(1, Math.max(0, w));
+    point.mix = Math.min(1, Math.max(0, mix));
   }
 
   /**
@@ -278,6 +423,9 @@ const setAnimations = (gltf: GLTF) => {
   function resumeIdle() {
     gsap.killTweensOf(hang);
     hang.weight = 0;
+    point.weight = 0;
+    point.mix = 0;
+    headRoll.value = 0;
     blend.run = 0;
     blend.fall = 0;
     runAction?.setEffectiveWeight(0);
@@ -343,7 +491,15 @@ const setAnimations = (gltf: GLTF) => {
     };
   }
 
-  characterControls = { setHangWeight, setRun, setFall, land, resumeIdle };
+  characterControls = {
+    setHangWeight,
+    setPointWeight,
+    setHeadRoll,
+    setRun,
+    setFall,
+    land,
+    resumeIdle,
+  };
 
   return { mixer, startIntro, hover, tick, reactToChat };
 };

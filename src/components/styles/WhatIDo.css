@@ -483,3 +483,19 @@
     line-height: 6.8rem;
   }
 }
+
+/* Touch: a collapsed card shows only its title and tagline, so it clearly
+   reads as closed next to the open one. */
+.what-content:not(.what-noTouch) {
+  cursor: pointer;
+}
+
+.what-content.what-sibling:not(.what-noTouch) .what-content-in {
+  overflow: hidden;
+}
+
+.what-content.what-sibling:not(.what-noTouch) p,
+.what-content.what-sibling:not(.what-noTouch) h5,
+.what-content.what-sibling:not(.what-noTouch) .what-content-flex {
+  display: none;
+}

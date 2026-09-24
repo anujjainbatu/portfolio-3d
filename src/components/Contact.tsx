@@ -68,9 +68,33 @@ const Contact = () => {
                 {config.contact.email}
               </a>
             </p>
+            <h4>Phone</h4>
+            <p>
+              <a href={`tel:${config.contact.phone}`} data-cursor="disable">
+                {config.contact.phoneDisplay}
+              </a>
+            </p>
+            <h4>WhatsApp</h4>
+            <p>
+              <a
+                href={config.contact.whatsapp}
+                target="_blank"
+                rel="noopener noreferrer"
+                data-cursor="disable"
+              >
+                {config.contact.whatsappDisplay}
+              </a>
+            </p>
             <h4>Location</h4>
             <p>
-              <span>{config.social.location}</span>
+              <a
+                href={config.location.mapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                data-cursor="disable"
+              >
+                {config.social.location}
+              </a>
             </p>
           </div>
           <div className="contact-box">
@@ -92,6 +116,24 @@ const Contact = () => {
               className="contact-social"
             >
               Linkedin <MdArrowOutward />
+            </a>
+            <a
+              href={config.contact.twitter}
+              target="_blank"
+              rel="noopener noreferrer"
+              data-cursor="disable"
+              className="contact-social"
+            >
+              X <MdArrowOutward />
+            </a>
+            <a
+              href={config.contact.instagram}
+              target="_blank"
+              rel="noopener noreferrer"
+              data-cursor="disable"
+              className="contact-social"
+            >
+              Instagram <MdArrowOutward />
             </a>
             <a
               href={config.contact.resume}

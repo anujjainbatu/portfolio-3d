@@ -21,8 +21,8 @@ describe("assistant policy", () => {
 
   it("includes the public project, impact, pivot, and contact context", () => {
     const prompt = buildSystemPrompt();
-    expect(prompt).toContain("WhatsApp commerce platform");
-    expect(prompt).toContain("₹15L/month");
+    expect(prompt).toContain("WhatsApp & email commerce platform");
+    expect(prompt).toContain("43× ROAS");
     expect(prompt).toContain("careerPivot");
     expect(prompt).toContain("anujjainbatu@gmail.com");
   });

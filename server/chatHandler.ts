@@ -143,7 +143,11 @@ export function createChatHandler(
         validation.messages,
         buildSystemPrompt(),
       );
-      return sendJson(response, 200, { message });
+      // The site carries no em dashes; the prompt asks for none, and this
+      // catches any the model writes anyway.
+      return sendJson(response, 200, {
+        message: message.replace(/\s*—\s*/g, ", "),
+      });
     } catch (error) {
       if (error instanceof ProviderConfigurationError) {
         return sendError(

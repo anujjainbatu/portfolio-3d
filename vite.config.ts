@@ -1,11 +1,12 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { viteChatPlugin } from "./server/viteChatPlugin";
+import { viteSeoPlugin } from "./server/viteSeoPlugin";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   return {
-    plugins: [react(), viteChatPlugin(mode)],
+    plugins: [react(), viteChatPlugin(mode), viteSeoPlugin()],
     build: {
       rollupOptions: {
         output: {

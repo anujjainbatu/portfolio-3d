@@ -13,8 +13,9 @@ serverless portfolio assistant on Vercel.
 Public site and assistant facts live in
 [`shared/publicProfile.ts`](shared/publicProfile.ts). Components continue to
 import `src/config.ts`, which re-exports that canonical profile. Only facts that
-are safe to publish belong there: no client identities, salary, phone number,
-employer stability, job-search details, or future claims.
+are safe to publish belong there: client identities stay private unless a public
+project has been explicitly approved for linking; salary, phone number, employer
+stability, job-search details, and future claims remain private.
 
 The server-only assistant rules live in `server/chatPolicy.ts`. The browser
 never sends or controls the system prompt.
