@@ -126,26 +126,49 @@ const AUTOSCROLL_TRIGGER_PX = 8;
 /**
  * The hole is the vortex in the tech section's background video, so its screen
  * position is derived from the video rather than guessed at as a fraction of
- * the section. Intrinsic size and the throat's position were measured off the
+ * the section. Intrinsic size and the mouth's position were measured off the
  * file itself; the object-fit: cover maths below then holds at any viewport,
  * which a section-relative fraction would not (the crop changes with aspect).
+ *
+ * Note this scales with the SECTION, not the viewport. The section is taller
+ * than its min-height: 100vh — 1060px against a 900px viewport, because the tag
+ * sphere's 460px stage and the heading above it outgrow the screen — so the
+ * video is cover-cropped to 1060 tall and every v below is a fraction of that.
+ * Growing the section pushes the mouth down in proportion, which is why the
+ * error in HOLE_V got worse when that section was rebuilt.
  */
 const HOLE_VIDEO_W = 2560;
 const HOLE_VIDEO_H = 1192;
 /**
- * The throat of the funnel, not the ball hovering in it — measured off the
- * video by profiling the funnel's width per row. It narrows from 526px wide at
- * v=0.705 to 70px at v=0.747 and is gone by v=0.755, with its centre steady at
- * u=0.501. The ball sits far higher, centred at v=0.439, which is what an
- * earlier brightest-pixel reading picked up by mistake.
+ * The mouth of the gravity well, measured off the video by profiling the bright
+ * region's width per row across twelve frames. Every frame agrees within 0.01,
+ * and the horizontal centre is steadier still: u = 0.494..0.500 throughout.
+ *
+ * v was 0.745 and that was wrong — it put him in open dark space below the whole
+ * structure. The trap is that the well fades rather than ending on an edge, so
+ * "where does it stop" depends almost entirely on the brightness threshold you
+ * profile at. Sweeping that threshold across all twelve frames:
+ *
+ *   threshold   0.35   0.45   0.55   0.65   0.75
+ *   collapses   .748   .723   .706   .689   .672
+ *
+ * A loose threshold chases the dim glow trailing underneath and lands near
+ * 0.745; that is the tail, not the mouth. At a strict threshold the funnel
+ * narrows steadily — width 53, 35, 26, 23 at v = 0.630, 0.655, 0.664, 0.672 —
+ * and collapses to 5 by v = 0.681, which is its tip. Rendering a frame with
+ * candidate rows drawn on it agrees: the grid converges and terminates around
+ * v = 0.64..0.66.
+ *
+ * So this sits between where the grid visually ends and where the core
+ * collapses, putting him in the neck with the funnel still open around him.
  */
-const HOLE_U = 0.501;
-const HOLE_V = 0.745;
+const HOLE_U = 0.498;
+const HOLE_V = 0.655;
 /**
  * He reaches the pit only at the very end of the fall.
  *
- * The pit is 790px down the tech section, so for most of the descent it is
- * still below the fold and rising. Arriving early meant arriving at an
+ * The pit is about 694px down the tech section, so for most of the descent it
+ * is still below the fold and rising. Arriving early meant arriving at an
  * off-screen position and then shrinking out of sight down there; staying with
  * it until the end keeps him on screen all the way in.
  */
@@ -157,8 +180,16 @@ const FALL_ARRIVES = 0.95;
  * right at the end.
  */
 const SINK_FROM = 0.9;
-/** How far below the pit's mouth he carries on descending, in screen px. */
-const SINK_DEPTH_PX = 55;
+/**
+ * How far below the pit's mouth he carries on descending, in screen px.
+ *
+ * He has to keep sinking as he shrinks or it reads as evaporating in mid-air
+ * rather than being swallowed — but the funnel's tip is only ~28px below the
+ * mouth (HOLE_V above), so the old 55 carried him straight back out of the
+ * bottom of it. That was the same complaint this fix is for, in miniature.
+ * At 30 he comes to rest on the tip: swallowed, with nothing left showing.
+ */
+const SINK_DEPTH_PX = 30;
 /** Fraction of the fall over which he eases out of standing and into the tip. */
 const FALL_POSE_BLEND = 0.12;
 /**

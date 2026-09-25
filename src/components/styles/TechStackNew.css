@@ -86,6 +86,9 @@
   max-width: 1000px;
   margin: 0 auto;
   padding: 0 20px;
+  /* Lifts the sphere onto the vortex's ring. A transform, not a margin, so
+     the section's box (which GsapScroll measures for the pit) is unchanged. */
+  transform: translateY(-60px);
 }
 
 .techstack-content h2 {
@@ -93,7 +96,7 @@
   text-align: center;
   font-weight: 400;
   text-transform: uppercase;
-  margin-bottom: 50px;
+  margin-bottom: 35px;
   background: linear-gradient(180deg, var(--star) 0%, var(--accentColor) 100%);
   background-clip: text;
   -webkit-background-clip: text;
@@ -101,126 +104,165 @@
   color: transparent;
 }
 
-/* Pyramid Container */
-.techstack-pyramid {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
+/* Category colours: the launch blue, the signal green and two warm/cool
+   companions that stay legible over the darkened vortex. */
+.techstack-new {
+  --cat-code: var(--accentColor);
+  --cat-automation: var(--signal);
+  --cat-ai: #b39dff;
+  --cat-infra: #ffc98f;
 }
 
-/* Each Row */
-.techstack-row {
+/* Filter chips */
+.ts-filters {
   display: flex;
-  justify-content: center;
-  gap: 10px;
   flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 10px;
 }
 
-/* Tech Item */
-.techstack-item {
-  display: flex;
-  flex-direction: column;
+.ts-filter {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 55px;
-  height: 68px;
-  padding: 8px;
-  border-radius: 10px;
-  background: var(--hull);
+  gap: 9px;
+  padding: 12px 22px;
+  border-radius: 999px;
   border: 1px solid var(--line);
+  background: rgba(18, 23, 36, 0.55);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  transition: all 0.3s ease;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.techstack-item:hover {
-  transform: translateY(-6px) scale(1.08);
-  background: rgba(var(--accent-rgb), 0.1);
-  border-color: var(--accentColor);
-  box-shadow: 0 8px 30px rgba(var(--accent-rgb), 0.25);
-}
-
-.techstack-item img {
-  width: 30px;
-  height: 30px;
-  object-fit: contain;
-  filter: grayscale(100%) contrast(1.2) brightness(1.5);
-  opacity: 0.85;
-  transition: filter 0.3s ease, opacity 0.3s ease;
-}
-
-.techstack-item:hover img {
-  filter: none;
-  opacity: 1;
-}
-
-.techstack-item span {
-  font-size: 9px;
   color: var(--muted);
-  margin-top: 5px;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 50px;
+  font: inherit;
+  font-size: 12px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 0.25s ease, color 0.25s ease, background 0.25s ease;
 }
 
-.techstack-item:hover span {
+.ts-filter:hover {
+  border-color: rgba(var(--accent-rgb), 0.6);
   color: var(--star);
 }
 
-/* Responsive */
-@media screen and (max-width: 1200px) {
-  .techstack-content {
-    max-width: 900px;
-  }
-  
-  .techstack-item {
-    width: 50px;
-    height: 62px;
-  }
-  
-  .techstack-item img {
-    width: 26px;
-    height: 26px;
-  }
-  
-  .techstack-item span {
-    font-size: 8px;
-  }
+.ts-filter:focus-visible {
+  outline: 2px solid var(--accentColor);
+  outline-offset: 3px;
 }
 
+.ts-filter.active {
+  background: var(--accentColor);
+  border-color: var(--accentColor);
+  color: var(--on-accent);
+}
+
+.ts-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: block;
+  background-color: currentColor;
+}
+
+.ts-dot[data-cat="code"],
+.ts-tag[data-cat="code"] { color: var(--cat-code); }
+.ts-dot[data-cat="automation"],
+.ts-tag[data-cat="automation"] { color: var(--cat-automation); }
+.ts-dot[data-cat="ai"],
+.ts-tag[data-cat="ai"] { color: var(--cat-ai); }
+.ts-dot[data-cat="infra"],
+.ts-tag[data-cat="infra"] { color: var(--cat-infra); }
+
+/* The sphere */
+.ts-stage {
+  position: relative;
+  height: 460px;
+  overflow: hidden;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  /* Horizontal drags spin the ball; vertical ones still scroll the page. */
+  touch-action: pan-y;
+}
+
+.ts-stage.dragging {
+  cursor: grabbing;
+}
+
+.ts-tag {
+  position: absolute;
+  left: 0;
+  top: 0;
+  white-space: nowrap;
+  text-decoration: none;
+  line-height: 1.1;
+  font-size: 0.85rem;
+  will-change: transform, opacity;
+  transition: text-shadow 0.3s ease;
+  -webkit-user-drag: none;
+}
+
+.ts-tag[data-weight="2"] { font-size: 1.05rem; }
+.ts-tag[data-weight="3"] { font-size: 1.35rem; }
+
+.ts-tag:hover,
+.ts-tag:focus-visible {
+  text-shadow: 0 0 18px currentColor;
+  outline: none;
+}
+
+.ts-tag.dim { opacity: 0.1 !important; }
+.ts-tag.match { text-shadow: 0 0 22px currentColor; }
+
+/* Narrow screens: a wrapped list instead of a ball. */
+.ts-stage.flat {
+  height: auto;
+  overflow: visible;
+  cursor: default;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 18px;
+  padding: 30px 0 10px;
+  touch-action: auto;
+}
+
+.ts-stage.flat .ts-tag {
+  position: static;
+  will-change: auto;
+}
+
+.ts-stage.flat .ts-tag.dim { opacity: 0.18 !important; }
+
+.ts-hint {
+  text-align: center;
+  font-size: 12px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--muted-dim);
+  margin: 6px 0 0;
+}
+
+/* Responsive */
 @media screen and (max-width: 900px) {
+  .techstack-content {
+    transform: none;
+  }
+
   .techstack-content h2 {
     font-size: 50px;
     margin-bottom: 35px;
   }
-  
-  .techstack-pyramid {
-    gap: 8px;
+
+  .ts-stage {
+    height: 420px;
   }
-  
-  .techstack-row {
-    gap: 8px;
-  }
-  
-  .techstack-item {
-    width: 45px;
-    height: 56px;
-    padding: 6px;
-  }
-  
-  .techstack-item img {
-    width: 22px;
-    height: 22px;
-  }
-  
-  .techstack-item span {
-    font-size: 7px;
-    max-width: 42px;
+
+  .ts-filter {
+    padding: 10px 16px;
+    font-size: 11px;
+    letter-spacing: 0.16em;
   }
 }
 
@@ -228,42 +270,14 @@
   .techstack-content h2 {
     font-size: 36px;
   }
-  
-  .techstack-pyramid {
-    gap: 6px;
-  }
-  
-  .techstack-row {
-    gap: 6px;
-  }
-  
-  .techstack-item {
-    width: 40px;
-    height: 50px;
-    padding: 5px;
-    border-radius: 8px;
-  }
-  
-  .techstack-item img {
-    width: 20px;
-    height: 20px;
-  }
-  
-  .techstack-item span {
-    font-size: 6px;
-    max-width: 38px;
-    margin-top: 3px;
-  }
-}
 
-/* simple-icons glyphs are solid black; invert instead of the grayscale wash
-   the colour devicon SVGs get. */
-.techstack-item-mono img {
-  filter: invert(1) brightness(0.85);
-  opacity: 0.8;
-}
+  .ts-filters {
+    gap: 8px;
+  }
 
-.techstack-item-mono:hover img {
-  filter: invert(1);
-  opacity: 1;
+  .ts-filter {
+    padding: 8px 12px;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+  }
 }
