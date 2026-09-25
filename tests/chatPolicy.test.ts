@@ -24,7 +24,7 @@ describe("assistant policy", () => {
     expect(prompt).toContain("WhatsApp & email commerce platform");
     expect(prompt).toContain("43× ROAS");
     expect(prompt).toContain("careerPivot");
-    expect(prompt).toContain("anujjainbatu@gmail.com");
+    expect(prompt).toContain("contact@anujjain.in");
   });
 
   it.each([

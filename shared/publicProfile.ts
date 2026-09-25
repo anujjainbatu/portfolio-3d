@@ -82,7 +82,7 @@ export const config = {
 
   social: {
     github: "anujjainbatu",
-    email: "anujjainbatu@gmail.com",
+    email: "contact@anujjain.in",
     location: "Hyderabad, India",
   },
 
@@ -304,7 +304,7 @@ export const config = {
   ] as Recognition[],
 
   contact: {
-    email: "anujjainbatu@gmail.com",
+    email: "contact@anujjain.in",
     github: "https://github.com/anujjainbatu",
     linkedin: "https://linkedin.com/in/anujjainbatu",
     twitter: "https://x.com/anujainbatu",
