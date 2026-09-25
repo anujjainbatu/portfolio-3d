@@ -11,6 +11,7 @@ import SocialIcons from "./SocialIcons";
 import WhatIDo from "./WhatIDo";
 import Work from "./Work";
 import TechStackNew from "./TechStackNew";
+import DesktopWalkthrough from "./DesktopWalkthrough";
 import setSplitText from "./utils/splitText";
 import "./styles/Starfield.css";
 
@@ -84,6 +85,11 @@ const MainContainer = ({ children }: PropsWithChildren) => {
         {/* <Recognition /> */}
         <Work />
         <TechStackNew />
+        {/* Only below 1025px, which is exactly where the character above is
+            not rendered and GsapScroll's tl1/tl2 are gated off. Conditional
+            rather than display:none so a desktop browser never considers the
+            media at all. */}
+        {!isDesktopView && <DesktopWalkthrough />}
         <Contact />
       </div>
     </div>
