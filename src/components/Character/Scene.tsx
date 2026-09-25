@@ -165,6 +165,10 @@ const Scene = () => {
       animate();
       return () => {
         cancelled = true;
+        // Stop this instance's progress counter. StrictMode runs this effect
+        // twice, and without it the discarded run's interval keeps ticking for
+        // the life of the page, overwriting the live loader's percentage.
+        progress.stop();
         clearTimeout(debounce);
         removeHoverListener?.();
         removeChatReactionListener?.();

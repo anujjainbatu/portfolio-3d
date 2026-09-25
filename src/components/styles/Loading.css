@@ -1,25 +1,16 @@
+/* The screen itself paints nothing any more. The two doors below are opaque
+   and together cover the viewport, so when they part what shows through is the
+   real page — including its own .starfield, which is already fixed behind
+   everything at z-index -1. Giving this element a background would put a layer
+   between the doors and the site and there would be nothing to reveal. */
 .loading-screen {
   position: fixed;
+  inset: 0;
   width: 100vw;
   height: var(--vh);
-  /* Pre-launch: the loader runs dark so there is no white flash before a
-     dark site. Timings and the expanding-pill transition are unchanged. */
-  background-color: var(--void);
-  background-image:
-    radial-gradient(1px 1px at 37px 84px, rgba(248, 250, 252, 0.5), transparent),
-    radial-gradient(1px 1px at 152px 231px, rgba(248, 250, 252, 0.35), transparent),
-    radial-gradient(1px 1px at 286px 47px, rgba(248, 250, 252, 0.45), transparent),
-    radial-gradient(1px 1px at 341px 276px, rgba(248, 250, 252, 0.4), transparent),
-    radial-gradient(
-      ellipse 60% 50% at 50% 50%,
-      rgba(29, 78, 216, 0.18) 0%,
-      transparent 65%
-    );
-  background-size: 400px 400px, 400px 400px, 400px 400px, 400px 400px, 100% 100%;
   z-index: 999999999;
-  display: flex;
-  place-items: center;
-  justify-content: center;
+  overflow: hidden;
+  pointer-events: none;
 }
 .loading-button {
   padding: 20px 50px;
@@ -71,13 +62,13 @@
   justify-content: center;
   align-items: center;
 }
+/* Was an expanding pill that inflated to calc(100vw + 5000px) and wiped the
+   screen. The gate does the reveal now, so the readout just gets out of the
+   way. */
 .loading-clicked {
-  transition-delay: 0ms;
-  transition-timing-function: cubic-bezier(0.33, 0.11, 1, 0.72);
-  transform: scale(1);
-  min-width: calc(100vw + 5000px);
-  border-radius: 5000px;
-  min-height: calc(100vh + 500px);
+  transition: opacity 0.35s ease, transform 0.5s ease;
+  opacity: 0;
+  transform: translateY(14px);
   box-shadow: none;
 }
 .loading-clicked .loading-button {
@@ -374,4 +365,361 @@
   .loader-title {
     font-size: 18px;
   }
+}
+
+/* ===========================================================================
+   The hangar gate
+
+   A spaceship bay door seen head-on. Every surface here is a gradient: the
+   loading screen's whole job is to cover the 748KB of model and HDR the hero
+   needs, so it cannot afford to wait on an asset of its own before it can
+   paint. Nothing below fetches anything.
+
+   Layering, back to front: the two doors, the bloom behind their seam, the lit
+   seam itself, then the bulkhead frame carrying the readout and the crawl.
+   =========================================================================== */
+
+.hangar {
+  position: absolute;
+  inset: 0;
+  /* --p is the load percentage, handed down from Loading.tsx as a bare number
+     so the seam can grow with it without any extra React state. */
+  --seam: calc(var(--p, 0) * 1%);
+  transform: scale(1);
+  transition: transform 1.4s cubic-bezier(0.65, 0, 0.35, 1);
+  will-change: transform;
+}
+
+/* --------------------------------------------------------------- The doors */
+
+.hangar-door {
+  position: absolute;
+  top: 0;
+  /* The extra pixel is overlap. At fractional viewport widths two exact 50%
+     panels leave a hairline of page showing down the middle. */
+  width: calc(50% + 1px);
+  height: 100%;
+  background-color: var(--panel);
+  background-image:
+    /* rivets along the plating joins */
+    radial-gradient(
+      circle at 50% 50%,
+      rgba(var(--accent-rgb), 0.22) 0.6px,
+      transparent 1.8px
+    ),
+    /* horizontal plating bands */
+    repeating-linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.11) 0px,
+      rgba(255, 255, 255, 0.11) 1px,
+      rgba(5, 7, 13, 0.55) 1px,
+      rgba(5, 7, 13, 0.55) 4px,
+      transparent 4px,
+      transparent 78px
+    ),
+    /* vertical structural ribs, so the panel is not just stripes */
+    repeating-linear-gradient(
+      to right,
+      rgba(255, 255, 255, 0.075) 0px,
+      rgba(255, 255, 255, 0.075) 2px,
+      rgba(5, 7, 13, 0.5) 2px,
+      rgba(5, 7, 13, 0.5) 6px,
+      transparent 6px,
+      transparent 210px
+    ),
+    /* a broad sheen so the metal is not flat */
+    linear-gradient(
+      to bottom,
+      #232b3e 0%,
+      #1a2030 42%,
+      #10151f 100%
+    );
+  background-size: 78px 78px, 100% 78px, 210px 100%, 100% 100%;
+  transition: transform 1.2s cubic-bezier(0.65, 0, 0.35, 1), opacity 0.4s ease;
+  will-change: transform;
+}
+
+.hangar-door.is-left {
+  left: 0;
+  border-right: 1px solid var(--line);
+}
+.hangar-door.is-right {
+  right: 0;
+  border-left: 1px solid var(--line);
+}
+
+/* Hazard chevrons down the closing edge, where a real gate would carry them. */
+.hangar-door::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 18px;
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(245, 158, 11, 0.22) 0px,
+    rgba(245, 158, 11, 0.22) 9px,
+    transparent 9px,
+    transparent 18px
+  );
+  opacity: 0.42;
+}
+.hangar-door.is-left::after {
+  right: 0;
+}
+.hangar-door.is-right::after {
+  left: 0;
+}
+
+/* A soft inner shadow at the join, so the seam reads as a recess. */
+.hangar-door::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 120px;
+}
+.hangar-door.is-left::before {
+  right: 0;
+  background: linear-gradient(to right, transparent, rgba(5, 7, 13, 0.75));
+}
+.hangar-door.is-right::before {
+  left: 0;
+  background: linear-gradient(to left, transparent, rgba(5, 7, 13, 0.75));
+}
+
+/* ------------------------------------------------- Seam, and the bloom behind */
+
+/* Grows from the middle outward with load progress, so the gate itself is the
+   progress bar and the percentage readout is confirmation rather than the only
+   signal. */
+.hangar-seam {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 2px;
+  height: var(--seam);
+  transform: translate(-50%, -50%);
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    var(--accentColor) 12%,
+    var(--star) 50%,
+    var(--accentColor) 88%,
+    transparent
+  );
+  box-shadow: 0 0 18px 2px rgba(var(--accent-rgb), 0.55);
+  transition: height 0.4s ease, opacity 0.5s ease;
+}
+
+.hangar-glow {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 380px;
+  height: 90%;
+  transform: translate(-50%, -50%) scale(1);
+  background: radial-gradient(
+    ellipse 50% 50% at 50% 50%,
+    rgba(var(--accent-rgb), 0.3) 0%,
+    rgba(var(--accent-rgb), 0.08) 40%,
+    transparent 72%
+  );
+  opacity: calc(0.25 + var(--p, 0) * 0.006);
+  transition: transform 1.1s cubic-bezier(0.65, 0, 0.35, 1), opacity 1.1s ease;
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------- The bulkhead */
+
+/* Darkens the outer edges so the lit seam is the brightest thing on screen and
+   the gate has some depth rather than reading as flat plating wall to wall. */
+.hangar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 75% 65% at 50% 50%,
+    transparent 0%,
+    rgba(5, 7, 13, 0.5) 62%,
+    rgba(5, 7, 13, 0.82) 100%
+  );
+  pointer-events: none;
+}
+
+.hangar-frame {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 38px;
+  transition: opacity 0.4s ease;
+}
+
+/* Structural ring, with the corners cut back so it reads as a gate rather than
+   a border drawn round the window. */
+.hangar-frame::before {
+  content: "";
+  position: absolute;
+  inset: 26px;
+  border: 1px solid rgba(var(--accent-rgb), 0.16);
+  clip-path: polygon(
+    34px 0,
+    calc(100% - 34px) 0,
+    100% 34px,
+    100% calc(100% - 34px),
+    calc(100% - 34px) 100%,
+    34px 100%,
+    0 calc(100% - 34px),
+    0 34px
+  );
+  pointer-events: none;
+}
+
+.loading-wrap {
+  pointer-events: auto;
+}
+
+/* ------------------------------------------------------------- Status crawl */
+
+/* The roles ticker, which used to run 60px tall across the middle of the
+   screen. Down here it is instrumentation instead of a headline. */
+.hangar-crawl {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 58px;
+  opacity: 0.65;
+}
+.hangar-crawl .loading-marquee {
+  position: static;
+  transform: none;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.34em;
+  color: var(--muted);
+}
+.hangar-crawl .loading-marquee span {
+  padding: 0 26px;
+}
+.hangar-crawl .loading-marquee span::before {
+  width: 4px;
+  height: 4px;
+  background-color: rgba(var(--accent-rgb), 0.7);
+}
+
+/* ------------------------------------------------------------------ Opening */
+
+.hangar-open {
+  /* Scaling the whole assembly past the camera is what reads as moving
+     forward; the doors sliding alone would just be two rectangles leaving. */
+  transform: scale(1.6);
+}
+.hangar-open .hangar-door.is-left {
+  transform: translateX(-100%);
+}
+.hangar-open .hangar-door.is-right {
+  transform: translateX(100%);
+}
+.hangar-open .hangar-glow {
+  transform: translate(-50%, -50%) scale(2.6);
+  opacity: 0;
+}
+.hangar-open .hangar-seam {
+  opacity: 0;
+}
+.hangar-open .hangar-frame {
+  opacity: 0;
+}
+
+/* Reduced motion: no travel and no scale — the gate simply clears. */
+@media (prefers-reduced-motion: reduce) {
+  .hangar,
+  .hangar-door,
+  .hangar-glow {
+    transition-duration: 0.4s;
+  }
+  .hangar-open {
+    transform: none;
+  }
+  .hangar-open .hangar-door.is-left,
+  .hangar-open .hangar-door.is-right {
+    transform: none;
+    opacity: 0;
+  }
+  .hangar-open .hangar-glow {
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* ------------------------------------------- Readout, as a console in the gate */
+
+/* The Loading% → Welcome pill, recessed into the bulkhead. Structure and the
+   .loading-complete / .loading-content2 behaviour are untouched; this is
+   dressing only. */
+.hangar .loading-wrap {
+  /* Wider than the 145px the round pill used. The console sets letter-spacing
+     on the label, and .loading-content-in clips to --Lsize with overflow
+     hidden — at 145px the percentage fell off the end and vanished. */
+  --Lsize: 200px;
+  border-radius: 4px;
+  /* Opaque, not translucent. The "Loading %" readout is absolutely positioned
+     ON TOP of the "Welcome" label and collapses to reveal it at 100% — so the
+     surface behind it has to actually hide it. Translucent here printed both
+     strings over each other. */
+  background-color: var(--deep);
+  border: 1px solid rgba(var(--accent-rgb), 0.28);
+  box-shadow:
+    0 0 0 1px rgba(5, 7, 13, 0.9),
+    0 18px 50px rgba(5, 7, 13, 0.75),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+.hangar .loading-button {
+  border-radius: 2px;
+  background-color: transparent;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-size: 13px;
+}
+.hangar .loading-content {
+  background-color: var(--deep);
+}
+/* The ambient glow was sized for the old 145px pill and swamps the console at
+   this scale. The fallbacks matter: --mouse-x/-y are unset until the pointer
+   enters, and an unresolved var makes top/left invalid, which parked it in the
+   corner. */
+.hangar .loading-hover {
+  top: var(--mouse-y, 50%);
+  left: var(--mouse-x, 50%);
+  width: 150px;
+  height: 56px;
+  filter: blur(36px);
+  opacity: 0.5;
+}
+/* Cleared for entry. The pill already swaps to this at 100%; green is the
+   difference between "still working" and "you may come aboard". */
+.hangar .loading-content2 span {
+  color: var(--signal);
+}
+.hangar .loading-box {
+  background-color: var(--signal);
+}
+
+/* -------------------------------------------- Header game, as a hull scanner */
+
+/* Same DOM and the same loaderGame/ball25 keyframes as before — only the
+   framing changed, so the easter egg survives as a readout. */
+.loaderGame-container {
+  border: 1px solid rgba(var(--accent-rgb), 0.18);
+  border-radius: 3px;
+  background-color: rgba(10, 13, 22, 0.6);
+  box-sizing: border-box;
+}
+.loaderGame-line {
+  background-color: rgba(var(--accent-rgb), 0.22);
+}
+.loaderGame-ball {
+  box-shadow: 0 0 12px 2px rgba(var(--accent-rgb), 0.6);
 }
