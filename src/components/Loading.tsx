@@ -80,22 +80,10 @@ const Loading = ({ percent }: { percent: number }) => {
 
   return (
     <>
-      <div className="loading-header">
+      <div className={`loading-header ${opening ? "header-out" : ""}`}>
         <a href="/#" className="loader-title" data-cursor="disable">
           {config.developer.fullName.replace(" ", "")}
         </a>
-        {/* The old bouncing-ball easter egg, reframed as a hull scanner. Same
-            DOM and same keyframes; only the dressing in the stylesheet moved. */}
-        <div className={`loaderGame ${opening && "loader-out"}`}>
-          <div className="loaderGame-container">
-            <div className="loaderGame-in">
-              {[...Array(27)].map((_, index) => (
-                <div className="loaderGame-line" key={index}></div>
-              ))}
-            </div>
-            <div className="loaderGame-ball"></div>
-          </div>
-        </div>
       </div>
       <div className="loading-screen">
         <div

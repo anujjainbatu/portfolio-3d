@@ -50,14 +50,30 @@
 
 /* The platform the character runs on. It ends with the last card rather than
    running to the horizon, so it can be pulled out from under him — the width
-   comes from Work.tsx because .work-flex is narrower than its own content. */
+   comes from Work.tsx because .work-flex is narrower than its own content.
+
+   Marked in amber, like a runway centreline: this is a threshold, the same
+   thing the loader's hangar-door chevrons mark. Dashes rather than chevrons
+   because the rule is 1px tall and a diagonal would not survive that.
+
+   height and top are load-bearing. GsapScroll cannot measure a pseudo element,
+   so it reads .work-flex's own rect top and depends on this rule sitting at
+   top: 0 for the two to coincide — that is what lets the robot stand on the
+   line while the cards slide underneath. The change here is paint only. */
 .work-flex::before,
 .work-flex::after {
   content: "";
   width: var(--work-line-w, 50000vw);
   height: 1px;
   background-color: var(--line);
-  box-shadow: 0 0 6px 0 rgba(var(--accent-rgb), 0.25);
+  background-image: repeating-linear-gradient(
+    to right,
+    rgba(var(--warn-rgb), 0.55) 0px,
+    rgba(var(--warn-rgb), 0.55) 26px,
+    transparent 26px,
+    transparent 52px
+  );
+  box-shadow: 0 0 6px 0 rgba(var(--warn-rgb), 0.22);
   position: absolute;
   left: 0;
   top: 0;

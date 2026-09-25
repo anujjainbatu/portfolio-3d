@@ -223,7 +223,7 @@ html.chat-modal-open body {
   height: 6px;
   border-radius: 50%;
   background: var(--signal);
-  box-shadow: 0 0 7px rgba(94, 226, 176, 0.9);
+  box-shadow: 0 0 7px rgba(var(--signal-rgb), 0.9);
   animation: portfolio-chat-pulse 2.4s ease-in-out infinite;
 }
 
@@ -883,7 +883,7 @@ html.chat-modal-open body {
   height: 6px;
   border-radius: 50%;
   background: var(--signal);
-  box-shadow: 0 0 7px rgba(94, 226, 176, 0.85);
+  box-shadow: 0 0 7px rgba(var(--signal-rgb), 0.85);
 }
 
 .portfolio-chat__link-row {

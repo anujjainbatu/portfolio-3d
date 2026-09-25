@@ -55,9 +55,27 @@
   --muted-dim: #64748b;
   --on-accent: #05070d;
 
-  /* Status */
+  /* Status. These carry meaning, not decoration:
+       --signal  live — running in production right now
+       --warn    structure — edges, thresholds, platform markings
+     The rgb channels exist because both are needed at partial alpha in glows
+     and washes, and every one of those was previously a hardcoded rgba(). */
   --signal: #5ee2b0;
+  --signal-rgb: 94, 226, 176;
   --warn: #f59e0b;
+  --warn-rgb: 245, 158, 11;
+  /* Amber text on a dark field, the same way --accentColor is the readable
+     tint of --accent-strong. #f59e0b clears AA on its own (5.7:1 over a bright
+     video frame); this reaches 7.3:1, which a 9px tag label over moving
+     footage wants. */
+  --warn-ink: #fbbf24;
+
+  /* Domain colours. Started life inside TechStackNew.css; global now, because
+     a category system owned by one section is not a system. */
+  --cat-code: var(--accentColor);
+  --cat-automation: var(--signal);
+  --cat-ai: #22d3ee;
+  --cat-infra: var(--warn-ink);
 
   --backgroundColor: var(--void);
   --vh: 100vh;

@@ -104,14 +104,13 @@
   color: transparent;
 }
 
-/* Category colours: the launch blue, the signal green and two warm/cool
-   companions that stay legible over the darkened vortex. */
-.techstack-new {
-  --cat-code: var(--accentColor);
-  --cat-automation: var(--signal);
-  --cat-ai: #b39dff;
-  --cat-infra: #ffc98f;
-}
+/* Category colours now live in index.css, so the domain system is global
+   rather than owned by this one section.
+
+   Two changed on the way: --cat-ai was #b39dff, a step away from the #c2a4ff
+   lavender this theme removed everywhere else, and --cat-infra was #ffc98f, an
+   unrelated peach sitting next to a real amber token. Cyan and amber keep the
+   four apart without reintroducing the old brand colour. */
 
 /* Filter chips */
 .ts-filters {

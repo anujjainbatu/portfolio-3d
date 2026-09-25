@@ -198,6 +198,13 @@
   top: 0;
   color: var(--ink);
 }
+/* Goes with the gate. It used to sit there until the component unmounted,
+   which was easy to miss while the scanner was beside it — on its own it read
+   as a label left behind on top of the revealed page. */
+.loading-header.header-out {
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
 .loader-title {
   font-weight: 700;
   font-size: 14px;
@@ -228,60 +235,6 @@
   }
 }
 
-.loaderGame-container {
-  width: 200px;
-  transition: 0.3s;
-  height: 100px;
-  overflow: hidden;
-  position: relative;
-  transform: scale(0.4);
-  transform-origin: top right;
-}
-.loader-out .loaderGame-container {
-  opacity: 0;
-}
-.loaderGame-in {
-  width: 1200px;
-  position: absolute;
-  overflow: hidden;
-  left: 0;
-  animation: loaderGame 7s linear infinite;
-}
-@keyframes loaderGame {
-  0% {
-    transform: translateX(0px);
-  }
-  100% {
-    transform: translateX(-300px);
-  }
-}
-.loaderGame-line {
-  float: left;
-  margin: 0px 20px;
-  margin-bottom: 40px;
-  position: relative;
-  width: 10px;
-  height: 60px;
-  background-color: var(--line);
-  display: block;
-}
-.loaderGame-line:nth-child(2n) {
-  margin-top: 40px;
-  margin-bottom: 0px;
-}
-
-.loaderGame-ball {
-  position: absolute;
-  left: 20%;
-  top: 0%;
-  width: 15px;
-  height: 15px;
-  border-radius: 50%;
-  background-color: var(--accentColor);
-  animation: ball25 7s infinite;
-  transform: translateY(10px);
-  animation-timing-function: cubic-bezier(0.3, 1.18, 0.63, 1.28);
-}
 .loading-marquee {
   position: absolute;
   top: 50%;
@@ -308,33 +261,6 @@
   left: 0px;
   transform: translate(-50%, -50%);
 }
-@keyframes ball25 {
-  0% {
-    transform: translateY(70px);
-  }
-  15% {
-    transform: translateY(10px);
-  }
-  30% {
-    transform: translateY(70px);
-  }
-  45% {
-    transform: translateY(10px);
-  }
-  67% {
-    transform: translateY(70px);
-  }
-  80% {
-    transform: translateY(10px);
-  }
-  90% {
-    transform: translateY(70px);
-  }
-  100% {
-    transform: translateY(70px);
-  }
-}
-
 @media only screen and (min-width: 1400px) {
   .loading-wrap {
     --Lsize: 210px;
@@ -457,8 +383,8 @@
   width: 18px;
   background-image: repeating-linear-gradient(
     -45deg,
-    rgba(245, 158, 11, 0.22) 0px,
-    rgba(245, 158, 11, 0.22) 9px,
+    rgba(var(--warn-rgb), 0.22) 0px,
+    rgba(var(--warn-rgb), 0.22) 9px,
     transparent 9px,
     transparent 18px
   );
@@ -707,19 +633,3 @@
   background-color: var(--signal);
 }
 
-/* -------------------------------------------- Header game, as a hull scanner */
-
-/* Same DOM and the same loaderGame/ball25 keyframes as before — only the
-   framing changed, so the easter egg survives as a readout. */
-.loaderGame-container {
-  border: 1px solid rgba(var(--accent-rgb), 0.18);
-  border-radius: 3px;
-  background-color: rgba(10, 13, 22, 0.6);
-  box-sizing: border-box;
-}
-.loaderGame-line {
-  background-color: rgba(var(--accent-rgb), 0.22);
-}
-.loaderGame-ball {
-  box-shadow: 0 0 12px 2px rgba(var(--accent-rgb), 0.6);
-}
