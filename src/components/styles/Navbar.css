@@ -2,7 +2,7 @@
   display: flex;
   max-width: var(--cMaxWidth);
   width: var(--cWidth);
-  justify-content: space-between;
+  justify-content: flex-end;
   padding: 15px 0px;
   margin-bottom: -80px;
   box-sizing: border-box;
@@ -40,11 +40,6 @@
   letter-spacing: 0.8px;
   font-weight: 500;
 }
-.navbar-title {
-  font-weight: 700;
-  font-size: 13px;
-  letter-spacing: 0.2px;
-}
 @media only screen and (min-width: 500px) {
   .header {
     padding: 20px 0px;
@@ -56,9 +51,6 @@
   }
   .header ul li {
     color: var(--ink);
-  }
-  .navbar-title {
-    font-size: 16px;
   }
 }
 @media only screen and (min-width: 900px) {
@@ -77,24 +69,18 @@
   .navbar-connect {
     font-size: 16px;
   }
-  .navbar-title {
-    font-size: 18px;
-  }
 }
 
 /* ---------------------------------------------------------------------------
-   Phone header: no wordmark, one row of links in a frosted bar. The bar
-   itself is .nav-fade, restyled from a gradient into a blurred strip.
+   Phone header: one row of links in a frosted bar. The bar itself is
+   .nav-fade, restyled from a gradient into a blurred strip. The wordmark this
+   block used to hide is gone from every width now, so the base rule already
+   right-aligns the list.
    --------------------------------------------------------------------------- */
 @media only screen and (max-width: 768px) {
-  .navbar-title {
-    display: none;
-  }
-
   .header {
     width: 100%;
     padding: env(safe-area-inset-top) 8px 0;
-    justify-content: flex-end;
   }
 
   .header ul {
