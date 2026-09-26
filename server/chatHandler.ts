@@ -6,9 +6,10 @@ import {
 } from "./chatValidation.js";
 import {
   ProviderConfigurationError,
+  ProviderRateLimitError,
   ProviderResponseError,
-  requestGroqAnswer,
-} from "./groq.js";
+  requestAnswer,
+} from "./llm.js";
 import {
   checkChatRateLimit,
   RateLimitConfigurationError,
@@ -83,7 +84,7 @@ const sendError = (
 
 export function createChatHandler(
   dependencies: HandlerDependencies = {
-    answer: requestGroqAnswer,
+    answer: requestAnswer,
     rateLimit: checkChatRateLimit,
   },
 ) {
@@ -155,6 +156,16 @@ export function createChatHandler(
           503,
           "assistant_unavailable",
           "The assistant is not configured on this deployment.",
+        );
+      }
+
+      if (error instanceof ProviderRateLimitError) {
+        response.setHeader("Retry-After", error.retryAfterSeconds);
+        return sendError(
+          response,
+          429,
+          "provider_rate_limited",
+          "The assistant is handling a lot of questions right now.",
         );
       }
 

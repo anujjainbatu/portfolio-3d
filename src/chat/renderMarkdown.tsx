@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 /**
  * A deliberately small Markdown renderer for assistant answers.
  *
- * It covers only what the provider actually emits (see server/groq.ts): short
+ * It covers only what the provider actually emits (see server/llm.ts): short
  * paragraphs, bullet and numbered lists, bold/italic/inline code, fenced code
  * blocks, and bare URLs. Anything it does not recognise falls through as plain
  * text, which is the correct failure mode for a chat transcript.

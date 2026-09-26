@@ -38,7 +38,8 @@ Vercel function in `api/chat.ts`; secrets are never injected into client code.
 
 `api/chat.ts` accepts a maximum of 12 user/assistant messages, validates and
 caps all text, applies a per-IP Upstash sliding-window limit, attaches the
-server-owned profile and policy, and proxies the approved request to Groq. The
+server-owned profile and policy, and proxies the approved request to Gemini, falling back to Groq when Gemini is
+rate-limited or unavailable. The
 API returns the application-owned shape `{ "message": "..." }`; provider
 responses are never exposed directly.
 
@@ -50,16 +51,18 @@ record event names only, never questions or answers.
 Required deployment variables:
 
 ```bash
-GROQ_API_KEY=...
+GEMINI_API_KEY=...
+GEMINI_MODEL=gemini-2.5-flash         # optional override
+GROQ_API_KEY=...                       # optional fallback
 GROQ_MODEL=openai/gpt-oss-20b       # optional override
 UPSTASH_REDIS_REST_URL=...
 UPSTASH_REDIS_REST_TOKEN=...
 ```
 
-The application intentionally returns an offline state when Groq or the
+The application intentionally returns an offline state when neither provider or the
 managed limiter is not configured. The rest of the site remains fully
-functional. Also configure a provider-side usage/budget limit in the Groq
-project.
+functional. Also configure a provider-side usage/budget limit in each
+provider project.
 
 ## Deploying
 

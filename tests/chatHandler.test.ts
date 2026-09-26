@@ -2,8 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 import { createChatHandler, type ChatRequest, type ChatResponse } from "../server/chatHandler";
 import {
   ProviderConfigurationError,
+  ProviderRateLimitError,
   ProviderResponseError,
-} from "../server/groq";
+} from "../server/llm";
 import { RateLimitConfigurationError } from "../server/rateLimit";
 
 const createResponse = () => {
@@ -135,5 +136,18 @@ describe("chat API handler", () => {
       error: { code: "rate_limit_not_configured" },
     });
     expect(JSON.stringify(result.body)).not.toContain("UPSTASH_REDIS_REST_TOKEN");
+  });
+
+  it("passes a provider rate limit to the client as a 429", async () => {
+    const handler = createChatHandler({
+      answer: vi.fn().mockRejectedValue(new ProviderRateLimitError(30)),
+      rateLimit: vi.fn().mockResolvedValue({ allowed: true, retryAfterSeconds: 0 }),
+    });
+    const result = createResponse();
+
+    await handler(request(), result.response);
+
+    expect(result.statusCode).toBe(429);
+    expect(result.headers.get("Retry-After")).toBe("30");
   });
 });

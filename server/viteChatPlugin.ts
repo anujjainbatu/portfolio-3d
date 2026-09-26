@@ -6,6 +6,8 @@ import { CHAT_LIMITS } from "./chatValidation";
 class PayloadTooLargeError extends Error {}
 
 const CHAT_ENVIRONMENT_KEYS = [
+  "GEMINI_API_KEY",
+  "GEMINI_MODEL",
   "GROQ_API_KEY",
   "GROQ_MODEL",
   "UPSTASH_REDIS_REST_URL",
