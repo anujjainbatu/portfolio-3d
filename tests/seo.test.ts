@@ -9,6 +9,7 @@ import {
   buildSitemap,
   SEO_ROUTES,
 } from "../server/seo";
+import { config } from "../shared/publicProfile";
 
 type Node = Record<string, unknown>;
 const graph = (route: (typeof SEO_ROUTES)[number]) =>
@@ -55,7 +56,9 @@ describe("SEO output", () => {
   it("lists every project on /myworks", () => {
     const page = findType("/myworks", "CollectionPage")!;
     const list = page.mainEntity as Node;
-    expect(list.itemListElement).toHaveLength(8);
+    expect(list.itemListElement).toHaveLength(config.projects.length);
+    expect(JSON.stringify(list)).toContain("AuditMesh: Multi-Agent Compliance");
+    expect(JSON.stringify(list)).toContain("OmniGuard: Secure AI Integration");
     expect(findType("/", "ProfilePage")).toBeDefined();
   });
 

@@ -83,7 +83,7 @@ const Work = () => {
     <div className="work-section" id="work">
       <div className="work-container section-container">
         <h2>
-          Systems in <span>production</span>
+          Systems I <span>build</span>
         </h2>
         <div className="work-flex">
           {config.projects.slice(0, 5).map((project, index) => (
@@ -112,7 +112,7 @@ const Work = () => {
           <div className="work-box work-box-cta">
             <div className="see-all-works">
               <h3>There is more.</h3>
-              <p>Every system I have shipped, with the architecture behind it</p>
+              <p>Every system I have shipped or am building, with the architecture behind it</p>
               <Link to="/myworks" className="see-all-btn" data-cursor="disable">
                 See All Work →
               </Link>

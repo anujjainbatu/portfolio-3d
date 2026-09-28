@@ -18,7 +18,7 @@ const MyWorks = () => {
         <h1>
           All <span>Work</span>
         </h1>
-        <p>Systems running against real client revenue, and how they fit together</p>
+        <p>Production systems and current builds, mapped from trigger to outcome</p>
       </div>
 
       <div className="myworks-grid">
@@ -26,7 +26,9 @@ const MyWorks = () => {
           const isInternalLink = Boolean(project.link?.startsWith("/"));
           const cardContent = (
             <>
-              <div className="myworks-card-number">0{index + 1}</div>
+              <div className="myworks-card-number">
+                {String(index + 1).padStart(2, "0")}
+              </div>
               <div className="myworks-card-flow">
                 <FlowCard
                   flow={project.flow}

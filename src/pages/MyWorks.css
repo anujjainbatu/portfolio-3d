@@ -5,6 +5,16 @@
   box-sizing: border-box;
 }
 
+/* The animated home page locks body scrolling on desktop. Give this route its
+   own scroll container so every project remains reachable without changing
+   the homepage's scroll choreography. */
+@media only screen and (min-width: 1025px) {
+  .myworks-page {
+    height: 100vh;
+    overflow-y: auto;
+  }
+}
+
 .myworks-header {
   text-align: center;
   margin-bottom: 60px;

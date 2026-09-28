@@ -130,7 +130,7 @@ export const config = {
       "/myworks": {
         title: "Work: Production AI & Automation Systems | Anuj Jain",
         description:
-          "Eight production systems by Anuj Jain: WhatsApp and email commerce, revenue attribution, AI voice lead qualification, ad-budget forecasting, internal tooling and healthcare websites.",
+          "Ten production and in-progress systems by Anuj Jain: commerce automation, revenue attribution, AI lead qualification, MCP-secured compliance, enterprise AI security, internal tooling and healthcare websites.",
       },
     } as Record<string, { title: string; description: string }>,
   },
@@ -180,8 +180,8 @@ export const config = {
   ] as Experience[],
 
   /**
-   * Eight systems in production. The first five feed the home page carousel;
-   * all eight appear on /myworks.
+   * Production and in-progress systems. The first five feed the home page
+   * carousel; every project appears on /myworks.
    */
   projects: [
     {
@@ -220,27 +220,38 @@ export const config = {
       link: "",
     },
     {
-      id: 4,
-      title: "Google Ads balance forecaster",
-      scale: "Every managed account",
-      technologies: "Google Ads API · n8n · Scheduled jobs",
-      flow: ["Ads API", "Forecast", "Friday alert"],
+      id: 9,
+      title: "AuditMesh: Multi-Agent Compliance",
+      scale: "Financial compliance capstone",
+      technologies: "LangGraph · MCP · Jira · Streamlit / Gradio",
+      flow: [
+        "Audit evidence",
+        "Agent supervisor",
+        "Human approval",
+        "MCP server",
+        "Jira",
+      ],
       description:
-        "Client ad budgets kept running dry over the weekend and campaigns stopped with nobody watching. Every Friday this answers one question per client: does the balance last until Monday? Plus threshold alerts whenever a balance runs low.",
-      result: "Weekend outages caught before they happen",
-      status: "live",
+        "Designing a multi-agent financial compliance workflow with human-in-the-loop approvals, secure Jira actions through a custom Model Context Protocol server, and token-cost and trace observability for enterprise operations.",
+      status: "in progress",
       link: "",
     },
     {
-      id: 5,
-      title: "Internal task manager",
-      scale: "Company-wide",
-      technologies: "Next.js · PostgreSQL · AI-assisted build",
-      flow: ["Create task", "Assign owner", "Track progress", "Complete"],
+      id: 10,
+      title: "OmniGuard: Secure AI Integration",
+      scale: "Enterprise security capstone",
+      technologies:
+        "OAuth 2.0 · RBAC · Hybrid RAG · Text-to-SQL · NeMo · Presidio · FastAPI",
+      flow: [
+        "Enterprise data",
+        "OAuth / RBAC",
+        "RAG / SQL",
+        "Guardrails",
+        "FastAPI",
+      ],
       description:
-        "We were paying around $300 a month for a tool that was heavier than a small team needed. I built ours instead, and it has stayed a continuous project. The newest piece is a credential manager that logs who revealed which password, and when.",
-      result: "Replaced a ~$300/month subscription",
-      status: "live",
+        "Building a secure enterprise AI connector with role-aware data access, hybrid RAG and guarded Text-to-SQL for Microsoft SQL Server, programmable NeMo and Presidio controls, and a Dockerized FastAPI deployment.",
+      status: "in progress",
       link: "",
     },
     {
@@ -275,6 +286,30 @@ export const config = {
         "Built a clinic website around treatment discovery and appointment conversion, with dedicated fertility and gynecology service pages, doctor-led credibility, local SEO, and direct consultation paths.",
       status: "live",
       link: "https://neofertility.co.in",
+    },
+    {
+      id: 4,
+      title: "Google Ads balance forecaster",
+      scale: "Every managed account",
+      technologies: "Google Ads API · n8n · Scheduled jobs",
+      flow: ["Ads API", "Forecast", "Friday alert"],
+      description:
+        "Client ad budgets kept running dry over the weekend and campaigns stopped with nobody watching. Every Friday this answers one question per client: does the balance last until Monday? Plus threshold alerts whenever a balance runs low.",
+      result: "Weekend outages caught before they happen",
+      status: "live",
+      link: "",
+    },
+    {
+      id: 5,
+      title: "Internal task manager",
+      scale: "Company-wide",
+      technologies: "Next.js · PostgreSQL · AI-assisted build",
+      flow: ["Create task", "Assign owner", "Track progress", "Complete"],
+      description:
+        "We were paying around $300 a month for a tool that was heavier than a small team needed. I built ours instead, and it has stayed a continuous project. The newest piece is a credential manager that logs who revealed which password, and when.",
+      result: "Replaced a ~$300/month subscription",
+      status: "live",
+      link: "",
     },
   ] as Project[],
 
