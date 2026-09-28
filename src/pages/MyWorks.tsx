@@ -13,7 +13,8 @@ const MyWorks = () => {
     <div className="myworks-page">
       <div className="myworks-header">
         <Link to="/" className="back-button" data-cursor="disable">
-          ← Back to Home
+          <img src="/logo-icon.png" alt="" width="24" height="24" />
+          <span>← Back to Home</span>
         </Link>
         <h1>
           All <span>Work</span>

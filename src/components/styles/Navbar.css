@@ -30,6 +30,27 @@
   font-weight: 600;
   cursor: pointer;
 }
+.navbar-brand {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+}
+.navbar-brand img {
+  width: 38px;
+  height: 38px;
+  display: block;
+}
+.navbar-brand:hover {
+  color: var(--ink);
+}
 .navbar-connect {
   position: absolute;
   display: none;
@@ -100,6 +121,19 @@
     align-items: center;
     min-height: 52px;
     padding: 0 12px;
+  }
+
+  .navbar-brand {
+    left: 10px;
+  }
+
+  .navbar-brand img {
+    width: 36px;
+    height: 36px;
+  }
+
+  .navbar-brand span {
+    display: none;
   }
 
   /* div. raises specificity over the base rule in Landing.css. Which of

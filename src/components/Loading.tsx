@@ -82,7 +82,8 @@ const Loading = ({ percent }: { percent: number }) => {
     <>
       <div className={`loading-header ${opening ? "header-out" : ""}`}>
         <a href="/#" className="loader-title" data-cursor="disable">
-          {config.developer.fullName.replace(" ", "")}
+          <img src="/logo-mark.svg" alt="" width="38" height="38" />
+          <span>{config.developer.fullName}</span>
         </a>
       </div>
       <div className="loading-screen">

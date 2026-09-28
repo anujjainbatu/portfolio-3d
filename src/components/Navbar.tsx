@@ -80,6 +80,10 @@ const Navbar = () => {
   return (
     <>
       <div className="header">
+        <a href="/" className="navbar-brand" aria-label="Anuj Jain home">
+          <img src="/logo-mark.svg" alt="" width="40" height="40" />
+          <span>{config.developer.fullName}</span>
+        </a>
         <a
           href={`mailto:${config.contact.email}`}
           className="navbar-connect"

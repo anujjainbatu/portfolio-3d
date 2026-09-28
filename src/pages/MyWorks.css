@@ -21,7 +21,9 @@
 }
 
 .back-button {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   color: var(--accentColor);
   text-decoration: none;
   font-size: 16px;
@@ -30,6 +32,12 @@
   padding: 10px 20px;
   border: 1px solid var(--accentColor);
   border-radius: 30px;
+}
+
+.back-button img {
+  width: 24px;
+  height: 24px;
+  display: block;
 }
 
 .back-button:hover {
