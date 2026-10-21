@@ -38,6 +38,7 @@ const techStack: TechItem[] = [
   { name: "n8n", url: "https://n8n.io", cat: "automation", weight: 3 },
   { name: "Zapier", url: "https://zapier.com", cat: "automation", weight: 3 },
   { name: "Shopify", url: "https://shopify.dev", cat: "automation", weight: 3 },
+  { name: "HubSpot", url: "https://developers.hubspot.com", cat: "automation", weight: 2 },
   { name: "WhatsApp / Email", url: "https://developers.facebook.com/docs/whatsapp", cat: "automation", weight: 2 },
   { name: "Meta Ads", url: "https://developers.facebook.com/docs/marketing-apis", cat: "automation", weight: 2 },
   { name: "Google Ads", url: "https://developers.google.com/google-ads/api/docs/start", cat: "automation", weight: 2 },

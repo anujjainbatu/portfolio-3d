@@ -117,6 +117,8 @@ export const config = {
       "API integration",
       "Integration architecture",
       "Voice AI lead qualification",
+      "HubSpot CRM",
+      "Lead generation automation",
       "Python",
       "FastAPI",
       "Django",
@@ -130,7 +132,7 @@ export const config = {
       "/myworks": {
         title: "Work: Production AI & Automation Systems | Anuj Jain",
         description:
-          "Ten production and in-progress systems by Anuj Jain: commerce automation, revenue attribution, AI lead qualification, MCP-secured compliance, enterprise AI security, internal tooling and healthcare websites.",
+          "Eleven production and in-progress systems by Anuj Jain: commerce automation, revenue attribution, AI lead qualification, HubSpot outbound lead generation, MCP-secured compliance, enterprise AI security, internal tooling and healthcare websites.",
       },
     } as Record<string, { title: string; description: string }>,
   },
@@ -216,6 +218,17 @@ export const config = {
       flow: ["Lead form", "n8n", "Voice AI", "WhatsApp / Email", "CRM", "Sales alert"],
       description:
         "A lead arrives, an AI voice agent calls and qualifies it, WhatsApp and email follow-ups run automatically, a meeting gets scheduled, the CRM is updated and sales are alerted live. What used to be manual chasing now runs end to end.",
+      status: "live",
+      link: "",
+    },
+    {
+      id: 11,
+      title: "Outbound sales engine",
+      scale: "Brilliant Brains in-house sales",
+      technologies: "Grok (xAI) · HubSpot · n8n · Gmail · Interakt",
+      flow: ["Grok research bot", "HubSpot", "Lifecycle", "n8n", "Email / WhatsApp"],
+      description:
+        "Our own pipeline, built end to end. A Grok research bot finds and qualifies D2C and clinic leads across India, UAE and the UK, verifies business emails and stores them in HubSpot with the evidence behind each one. HubSpot holds the lifecycle and consent on 33 custom properties, and twelve n8n workflows run the retargeting: personalised email and WhatsApp sequences, reply and bounce handling, meeting detection, and a consent-checked broadcast engine that pauses itself when bounces climb.",
       status: "live",
       link: "",
     },
@@ -356,7 +369,7 @@ export const config = {
       title: "AI & AUTOMATION",
       description: "Systems that run without anyone watching",
       details:
-        "AI agents and workflow automation wired into the tools a business already runs: lead qualification, lifecycle messaging, reporting that writes itself. Built on n8n, Python and the major model APIs, with structured logging, retries and error recovery so they hold up in production.",
+        "AI agents and workflow automation wired into the tools a business already runs: lead generation and qualification, lifecycle messaging, reporting that writes itself. Built on n8n, Python and the major model APIs, with structured logging, retries and error recovery so they hold up in production.",
       tools: [
         "n8n",
         "Python",
@@ -379,6 +392,7 @@ export const config = {
         "Shopify",
         "WhatsApp Business API / Email automation",
         "Interakt",
+        "HubSpot",
         "Payment gateways",
         "Meta Ads",
         "Google Ads",
